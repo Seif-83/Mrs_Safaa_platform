@@ -1,50 +1,52 @@
 
 import React from 'react';
 
-interface HeroProps {
-  onStartNowClick: () => void;
-}
-
-const Hero: React.FC<HeroProps> = ({ onStartNowClick }) => {
-  const handleContactWhatsApp = () => {
-    const phoneNumber = '201222966617';
-    const message = 'مرحباً، أود الاستفسار عن منصة ماما';
-    const whatsappUrl = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`;
-    window.open(whatsappUrl, '_blank');
-  };
-
+const Hero: React.FC = () => {
   return (
-    <div className="relative overflow-hidden bg-white pt-16 pb-32">
-      <div className="absolute top-0 right-0 -mr-20 -mt-20 w-96 h-96 bg-sky-50 rounded-full blur-3xl opacity-50"></div>
-      <div className="absolute bottom-0 left-0 -ml-20 -mb-20 w-96 h-96 bg-teal-50 rounded-full blur-3xl opacity-50"></div>
-      
+    <div className="relative overflow-hidden pt-20 pb-32 z-10 bg-transparent">
+      {/* Soft Glows */}
+      <div className="absolute top-0 right-0 -mr-20 -mt-20 w-[40rem] h-[40rem] bg-sky-100 rounded-full blur-[100px] opacity-40"></div>
+      <div className="absolute bottom-0 left-0 -ml-20 -mb-20 w-[30rem] h-[30rem] bg-teal-100 rounded-full blur-[100px] opacity-40"></div>
+
       <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="lg:grid lg:grid-cols-12 lg:gap-8 items-center">
-          <div className="sm:text-center md:max-w-2xl md:mx-auto lg:col-span-6 lg:text-right">
-            <h1 className="text-4xl tracking-tight font-extrabold text-gray-900 sm:text-5xl md:text-6xl lg:text-5xl xl:text-6xl">
-              <span className="block">تعلم العلوم بمتعة مع</span>
-              <span className="block text-sky-600 mt-2">الأستاذة صفاء إسماعيل</span>
+        <div className="lg:grid lg:grid-cols-12 lg:gap-16 items-center">
+          <div className="text-right lg:col-span-7">
+            <h1 className="text-5xl tracking-tight font-black text-gray-900 sm:text-6xl md:text-7xl">
+              <span className="block mb-2">تعلم العلوم بمتعة مع الأستاذة</span>
+              <span className="block text-sky-600">صفاء إسماعيل</span>
             </h1>
-            <p className="mt-3 text-base text-gray-500 sm:mt-5 sm:text-xl lg:text-lg xl:text-xl">
-              منصة تعليمية متكاملة لطلاب المرحلة الإعدادية. شروحات مبسطة، فيديوهات تفاعلية، ومذكرات شاملة لكل درس.
-            </p>
-            <div className="mt-8 sm:max-w-lg sm:mx-auto sm:text-center lg:text-right lg:mx-0 flex flex-wrap gap-4 justify-center lg:justify-start">
-              <button onClick={onStartNowClick} className="inline-flex items-center px-8 py-3 border border-transparent text-base font-medium rounded-2xl text-white science-gradient hover:shadow-lg transition-all transform hover:-translate-y-1">
+            <p className="mt-8 text-xl text-gray-600 leading-relaxed max-w-2xl lg:ml-0 lg:mr-auto">
+              منصة تعليمية متكاملة لطلاب المرحلة الإعدادية. شروحات مبسطة، فيديوهات تفاعلية، ومذكرات شاملة لكل درس.            </p>
+            <div className="mt-12 flex flex-wrap gap-6 justify-center">
+              <button
+                onClick={() => document.getElementById('levels')?.scrollIntoView({ behavior: 'smooth' })}
+                className="px-12 py-5 border border-transparent text-xl font-bold rounded-2xl text-white science-gradient hover:shadow-2xl transition-all transform hover:-translate-y-1 cursor-pointer"
+              >
                 ابدأ الدراسة الآن
               </button>
-              <button onClick={handleContactWhatsApp} className="inline-flex items-center px-8 py-3 border-2 border-sky-100 text-base font-medium rounded-2xl text-sky-700 bg-sky-50 hover:bg-sky-100 transition-all">
+              <a href="https://wa.me/201222966617" className="px-12 py-5 border-2 border-sky-100 text-xl font-bold rounded-2xl text-sky-700 bg-white/50 backdrop-blur-sm hover:bg-sky-50 transition-all">
                 تواصل معنا
-              </button>
+              </a>
             </div>
           </div>
-          <div className="mt-12 relative sm:max-w-lg sm:mx-auto lg:mt-0 lg:max-w-none lg:mx-0 lg:col-span-6 lg:flex lg:items-center">
-            <div className="relative mx-auto w-full rounded-3xl shadow-2xl overflow-hidden ring-8 ring-white">
+          <div className="mt-16 lg:mt-0 lg:col-span-5 relative">
+            <div className="relative mx-auto w-full rounded-[3rem] shadow-2xl overflow-hidden ring-12 ring-white/50 backdrop-blur-sm">
               <img
-                className="w-full object-cover"
+                className="w-full object-cover aspect-[4/5]"
                 src="/sections/logo2.jpg"
-                alt="Science Classroom"
+                alt="Science Learning"
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent"></div>
+              <div className="absolute inset-0 bg-gradient-to-t from-sky-900/40 via-transparent to-transparent"></div>
+            </div>
+            {/* Floating Element */}
+            <div className="absolute -bottom-6 -right-6 bg-white p-6 rounded-3xl shadow-2xl animate-science-float hidden md:block">
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 bg-teal-100 rounded-2xl flex items-center justify-center text-2xl">🧪</div>
+                <div>
+                  <div className="text-sm font-bold text-gray-900">فيديوهات تفاعلية</div>
+                  <div className="text-xs text-gray-500">فهم كل درس بسهولة</div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
