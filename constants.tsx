@@ -17,7 +17,7 @@ export const PREP_LEVELS_DATA: PrepData[] = [
     image: 'https://picsum.photos/seed/science1/800/600',
     description: 'Explore the basics of matter, energy, and living organisms.',
     lessons: [
-      { id: '1-1', title: 'المادة وخواصها', videoUrl: 'https://www.youtube.com/embed/dQw4w9WgXcQ', pdfUrl: 'public/sections/CV.pdf', description: 'تعريف المادة وخصائصها الفيزيائية والكيميائية' },
+      { id: '1-1', title: 'المادة وخواصها', videoUrl: 'https://www.youtube.com/embed/dQw4w9WgXcQ', pdfUrl: '/sections/CV.pdf', description: 'تعريف المادة وخصائصها الفيزيائية والكيميائية' },
       { id: '1-2', title: 'تركيب المادة', videoUrl: 'https://www.youtube.com/embed/dQw4w9WgXcQ', pdfUrl: 'prep1_lesson2.pdf', description: 'الجزيئات والذرات والروابط الكيميائية' },
       { id: '1-3', title: 'الطاقة الحرارية', videoUrl: 'https://www.youtube.com/embed/dQw4w9WgXcQ', pdfUrl: 'prep1_lesson3.pdf', description: 'مصادر الطاقة وطرق انتقال الحرارة' },
     ]
