@@ -164,9 +164,9 @@ const App: React.FC = () => {
               <p>خبيرة مادة العلوم للمرحلة الإعدادية</p>
             </div>
             <div className="flex gap-6">
-              <a href="#" className="hover:text-white transition-colors">فيسبوك</a>
-              <a href="#" className="hover:text-white transition-colors">يوتيوب</a>
-              <a href="#" className="hover:text-white transition-colors">واتساب</a>
+              <a href="https://www.facebook.com/share/16t9uVs1Q1/" className="hover:text-white transition-colors">فيسبوك</a>
+              <a href="https://youtube.com/@safaaesmail7729?si=7Pw4o4EbbIpmhgAc" className="hover:text-white transition-colors">يوتيوب</a>
+              <a href="https://wa.me/201222966617" className="hover:text-white transition-colors">واتساب</a>
             </div>
             <div className="text-sm">
               &copy; {new Date().getFullYear()} جميع الحقوق محفوظة

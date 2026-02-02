@@ -41,7 +41,7 @@ const Hero: React.FC<HeroProps> = ({ onStartNowClick }) => {
             <div className="relative mx-auto w-full rounded-3xl shadow-2xl overflow-hidden ring-8 ring-white">
               <img
                 className="w-full object-cover"
-                src="https://picsum.photos/seed/science_teacher/800/600"
+                src="/sections/logo2.jpg"
                 alt="Science Classroom"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent"></div>

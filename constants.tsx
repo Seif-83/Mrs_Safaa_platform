@@ -14,7 +14,7 @@ export const PREP_LEVELS_DATA: PrepData[] = [
     id: '1st-prep',
     title: '1st Prep',
     titleAr: 'الصف الأول الإعدادي',
-    image: 'https://picsum.photos/seed/science1/800/600',
+    image: '/sections/1st_prep.png',
     description: 'Explore the basics of matter, energy, and living organisms.',
     lessons: [
       { id: '1-1', title: 'المادة وخواصها', videoUrl: 'https://www.youtube.com/embed/dQw4w9WgXcQ', pdfUrl: '/sections/CV.pdf', description: 'تعريف المادة وخصائصها الفيزيائية والكيميائية' },
