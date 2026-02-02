@@ -1,0 +1,7 @@
+{
+  "name": "Mrs. Safaa Esmail - Science Platform",
+  "description": "An interactive Science education platform for preparatory stages, featuring video lessons, study materials, and an AI-powered Science Tutor.",
+  "requestFramePermissions": [
+    "microphone"
+  ]
+}
