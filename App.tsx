@@ -54,7 +54,17 @@ const ScienceBackground: React.FC = () => {
 };
 
 const HomePage: React.FC = () => {
-  const { levels } = useContentStore();
+  const { levels, isLoading } = useContentStore();
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center relative z-10">
+        <div className="text-center">
+          <div className="w-16 h-16 border-4 border-sky-200 border-t-sky-500 rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-gray-500 text-lg font-medium">جاري التحميل...</p>
+        </div>
+      </div>
+    );
+  }
   return (
     <div className="relative">
       <Hero />
@@ -77,7 +87,7 @@ const HomePage: React.FC = () => {
 
 const ContentPage: React.FC<{ type: 'videos' | 'notes' }> = ({ type }) => {
   const { levelId } = useParams<{ levelId: string }>();
-  const { levels } = useContentStore();
+  const { levels, isLoading } = useContentStore();
   const level = levels.find(l => l.id === levelId);
   const [accessCode, setAccessCode] = useState('');
   const [isUnlocked, setIsUnlocked] = useState(false);
