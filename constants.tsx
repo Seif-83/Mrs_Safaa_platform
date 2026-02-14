@@ -26,7 +26,7 @@ export const PREP_LEVELS_DATA: PrepData[] = [
     id: '2nd-prep',
     title: '2nd Prep',
     titleAr: 'الصف الثاني الإعدادي',
-    image: 'https://picsum.photos/seed/science2/800/600',
+    image: '/sections/2nd_prep.png',
     description: 'Dive deep into periodic tables, waves, and sound mechanics.',
     lessons: [
       { id: '2-1', title: 'دورية العناصر وخواصها', videoUrl: 'https://www.youtube.com/embed/dQw4w9WgXcQ', pdfUrl: 'prep2_lesson1.pdf', description: 'محاولات تصنيف العناصر والجدول الدوري الحديث' },

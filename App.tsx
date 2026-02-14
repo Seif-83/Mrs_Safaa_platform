@@ -12,13 +12,13 @@ const ScienceBackground: React.FC = () => {
       {/* Atom */}
       <div className="absolute top-[10%] left-[5%] animate-science-float text-sky-400/20">
         <svg width="180" height="180" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="0.5">
-          <circle cx="12" cy="12" r="2" fill="currentColor"/>
-          <ellipse cx="12" cy="12" rx="10" ry="3" transform="rotate(45 12 12)"/>
-          <ellipse cx="12" cy="12" rx="10" ry="3" transform="rotate(-45 12 12)"/>
-          <ellipse cx="12" cy="12" rx="10" ry="3" transform="rotate(90 12 12)"/>
+          <circle cx="12" cy="12" r="2" fill="currentColor" />
+          <ellipse cx="12" cy="12" rx="10" ry="3" transform="rotate(45 12 12)" />
+          <ellipse cx="12" cy="12" rx="10" ry="3" transform="rotate(-45 12 12)" />
+          <ellipse cx="12" cy="12" rx="10" ry="3" transform="rotate(90 12 12)" />
         </svg>
       </div>
-      
+
       {/* Microscope */}
       <div className="absolute bottom-[10%] right-[8%] animate-science-sway text-teal-400/20" style={{ animationDelay: '2s' }}>
         <svg width="140" height="140" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="0.5">
@@ -58,7 +58,7 @@ const HomePage: React.FC = () => (
         <h2 className="text-4xl font-extrabold text-gray-900">اختر المرحلة الدراسية</h2>
         <div className="mt-4 h-1.5 w-24 bg-sky-500 mx-auto rounded-full"></div>
         <p className="mt-6 text-gray-600 max-w-2xl mx-auto text-lg">
-كل ما يحتاجه طالب المرحلة الإعدادية للتفوق في مادة العلوم في مكان واحد.        </p>
+          كل ما يحتاجه طالب المرحلة الإعدادية للتفوق في مادة العلوم في مكان واحد.        </p>
       </div>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-12">
         {PREP_LEVELS_DATA.map(level => (
@@ -120,7 +120,7 @@ const ContentPage: React.FC<{ type: 'videos' | 'notes' }> = ({ type }) => {
             </div>
             <h2 className="text-3xl font-bold text-gray-900 mb-4">المحتوى محمي</h2>
             <p className="text-gray-500 mb-10 text-lg">يرجى إدخال الكود الخاص بك للبدء في مشاهدة الحصص.</p>
-            
+
             <form onSubmit={handleVerifyCode} className="space-y-6">
               <input
                 type="text"
@@ -145,10 +145,10 @@ const ContentPage: React.FC<{ type: 'videos' | 'notes' }> = ({ type }) => {
               <div key={lesson.id} className="bg-glass rounded-[2rem] shadow-xl overflow-hidden border border-white/50 flex flex-col hover:shadow-2xl transition-all group">
                 {type === 'videos' ? (
                   <div className="aspect-video bg-black relative">
-                    <iframe 
-                      className="w-full h-full" 
-                      src={lesson.videoUrl} 
-                        title={lesson.title}
+                    <iframe
+                      className="w-full h-full"
+                      src={lesson.videoUrl}
+                      title={lesson.title}
                       allowFullScreen
                     ></iframe>
                   </div>
@@ -161,9 +161,9 @@ const ContentPage: React.FC<{ type: 'videos' | 'notes' }> = ({ type }) => {
                   <h3 className="text-2xl font-bold text-gray-900 mb-3">{lesson.title}</h3>
                   <p className="text-gray-500 leading-relaxed mb-8">{lesson.description}</p>
                   {type === 'notes' && (
-                    <a 
-                      href={lesson.pdfUrl} 
-                      target="_blank" 
+                    <a
+                      href={lesson.pdfUrl}
+                      target="_blank"
                       rel="noopener noreferrer"
                       className="w-full py-4 bg-teal-600 text-white rounded-2xl font-bold hover:bg-teal-700 transition-all flex items-center justify-center gap-3 shadow-lg shadow-teal-600/20"
                     >
@@ -194,17 +194,23 @@ const App: React.FC = () => {
             <Route path="/level/:levelId/notes" element={<ContentPage type="notes" />} />
           </Routes>
         </main>
-        
+
         <footer className="bg-gray-900 text-gray-400 py-20 px-4 relative z-10">
           <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-12 items-center text-center md:text-right">
             <div>
               <h3 className="text-white text-2xl font-extrabold mb-4">الأستاذة صفاء إسماعيل</h3>
               <p className="text-lg">رحلتك نحو التميز في مادة العلوم تبدأ من هنا.</p>
             </div>
-            <div className="flex justify-center gap-8">
-              <a href="https://www.facebook.com/share/16t9uVs1Q1/" className="hover:text-sky-400 transition-colors text-xl">الفيس بوك</a>
-              <a href="https://youtube.com/@safaaesmail7729?si=7Pw4o4EbbIpmhgAc" className="hover:text-red-500 transition-colors text-xl">اليوتيوب</a>
-              <a href="https://wa.me/201222966617" className="hover:text-green-500 transition-colors text-xl">الواتس اب</a>
+            <div className="flex justify-center gap-6">
+              <a href="https://www.facebook.com/share/16t9uVs1Q1/" target="_blank" rel="noopener noreferrer" className="w-12 h-12 bg-white/10 rounded-xl flex items-center justify-center hover:bg-sky-500 hover:text-white transition-all" title="فيسبوك">
+                <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" /></svg>
+              </a>
+              <a href="https://youtube.com/@safaaesmail7729?si=7Pw4o4EbbIpmhgAc" target="_blank" rel="noopener noreferrer" className="w-12 h-12 bg-white/10 rounded-xl flex items-center justify-center hover:bg-red-500 hover:text-white transition-all" title="يوتيوب">
+                <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z" /></svg>
+              </a>
+              <a href="https://wa.me/201222966617" target="_blank" rel="noopener noreferrer" className="w-12 h-12 bg-white/10 rounded-xl flex items-center justify-center hover:bg-green-500 hover:text-white transition-all" title="واتساب">
+                <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z" /></svg>
+              </a>
             </div>
             <div className="text-sm">
               &copy; {new Date().getFullYear()} جميع الحقوق محفوظة لمنصة الأستاذة صفاء إسماعيل التعليمية
