@@ -4,7 +4,10 @@ import { HashRouter as Router, Routes, Route, useParams, Link } from 'react-rout
 import Navbar from './components/Navbar';
 import Hero from './components/Hero';
 import PrepLevelCard from './components/PrepLevelCard';
-import { PREP_LEVELS_DATA, VALID_ACCESS_CODES } from './constants';
+import AdminLogin from './components/AdminLogin';
+import AdminDashboard from './components/AdminDashboard';
+import { useContentStore } from './useContentStore';
+import { VALID_ACCESS_CODES } from './constants';
 
 const ScienceBackground: React.FC = () => {
   return (
@@ -50,28 +53,32 @@ const ScienceBackground: React.FC = () => {
   );
 };
 
-const HomePage: React.FC = () => (
-  <div className="relative">
-    <Hero />
-    <section id="levels" className="py-24 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-      <div className="text-center mb-16">
-        <h2 className="text-4xl font-extrabold text-gray-900">اختر المرحلة الدراسية</h2>
-        <div className="mt-4 h-1.5 w-24 bg-sky-500 mx-auto rounded-full"></div>
-        <p className="mt-6 text-gray-600 max-w-2xl mx-auto text-lg">
-          كل ما يحتاجه طالب المرحلة الإعدادية للتفوق في مادة العلوم في مكان واحد.        </p>
-      </div>
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-12">
-        {PREP_LEVELS_DATA.map(level => (
-          <PrepLevelCard key={level.id} data={level} />
-        ))}
-      </div>
-    </section>
-  </div>
-);
+const HomePage: React.FC = () => {
+  const { levels } = useContentStore();
+  return (
+    <div className="relative">
+      <Hero />
+      <section id="levels" className="py-24 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+        <div className="text-center mb-16">
+          <h2 className="text-4xl font-extrabold text-gray-900">اختر المرحلة الدراسية</h2>
+          <div className="mt-4 h-1.5 w-24 bg-sky-500 mx-auto rounded-full"></div>
+          <p className="mt-6 text-gray-600 max-w-2xl mx-auto text-lg">
+            كل ما يحتاجه طالب المرحلة الإعدادية للتفوق في مادة العلوم في مكان واحد.        </p>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-12">
+          {levels.map(level => (
+            <PrepLevelCard key={level.id} data={level} />
+          ))}
+        </div>
+      </section>
+    </div>
+  );
+};
 
 const ContentPage: React.FC<{ type: 'videos' | 'notes' }> = ({ type }) => {
   const { levelId } = useParams<{ levelId: string }>();
-  const level = PREP_LEVELS_DATA.find(l => l.id === levelId);
+  const { levels } = useContentStore();
+  const level = levels.find(l => l.id === levelId);
   const [accessCode, setAccessCode] = useState('');
   const [isUnlocked, setIsUnlocked] = useState(false);
   const [error, setError] = useState('');
@@ -192,6 +199,8 @@ const App: React.FC = () => {
             <Route path="/" element={<HomePage />} />
             <Route path="/level/:levelId/videos" element={<ContentPage type="videos" />} />
             <Route path="/level/:levelId/notes" element={<ContentPage type="notes" />} />
+            <Route path="/admin-login" element={<AdminLogin />} />
+            <Route path="/admin" element={<AdminDashboard />} />
           </Routes>
         </main>
 
