@@ -7,6 +7,7 @@ const StudentLogin: React.FC = () => {
     const [step, setStep] = useState<1 | 2>(1);
     const [name, setName] = useState('');
     const [phone, setPhone] = useState('');
+    const [level, setLevel] = useState('1st-prep');
     const [error, setError] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
     const navigate = useNavigate();
@@ -38,6 +39,7 @@ const StudentLogin: React.FC = () => {
                 sessionStorage.setItem('student_logged_in', 'true');
                 sessionStorage.setItem('student_name', student.name);
                 sessionStorage.setItem('student_phone', student.phone);
+                sessionStorage.setItem('student_level', student.level || '1st-prep'); // Default or stored
                 navigate('/');
             } else {
                 // Move to registration step
@@ -61,11 +63,12 @@ const StudentLogin: React.FC = () => {
         const phoneClean = phone.trim().replace(/\s/g, '');
 
         try {
-            await registerStudent(name.trim(), phoneClean);
+            await registerStudent(name.trim(), phoneClean, level);
             // Login after registration
             sessionStorage.setItem('student_logged_in', 'true');
             sessionStorage.setItem('student_name', name.trim());
             sessionStorage.setItem('student_phone', phoneClean);
+            sessionStorage.setItem('student_level', level);
             navigate('/');
         } catch (err: any) {
             setError(err.message || 'حدث خطأ أثناء التسجيل');
@@ -114,7 +117,7 @@ const StudentLogin: React.FC = () => {
                 ) : (
                     <div className="animate-fade-in">
                         <h2 className="text-3xl font-bold text-gray-900 mb-2">حساب جديد</h2>
-                        <p className="text-gray-500 mb-10 text-lg">رقم الهاتف غير مسجل. يرجى إدخال اسمك للتسجيل.</p>
+                        <p className="text-gray-500 mb-10 text-lg">رقم الهاتف غير مسجل. يرجى إدخال البيانات للتسجيل.</p>
 
                         <form onSubmit={handleRegisterSubmit} className="space-y-5">
                             <div>
@@ -127,6 +130,30 @@ const StudentLogin: React.FC = () => {
                                     autoFocus
                                 />
                             </div>
+
+                            <div>
+                                <label className="block text-right text-gray-700 font-bold mb-2 mr-2">المرحلة الدراسية:</label>
+                                <div className="grid grid-cols-3 gap-2">
+                                    {[
+                                        { id: '1st-prep', label: '1 إعدادي' },
+                                        { id: '2nd-prep', label: '2 إعدادي' },
+                                        { id: '3rd-prep', label: '3 إعدادي' }
+                                    ].map((l) => (
+                                        <button
+                                            key={l.id}
+                                            type="button"
+                                            onClick={() => setLevel(l.id)}
+                                            className={`p-3 rounded-xl border-2 font-bold transition-all ${level === l.id
+                                                    ? 'border-sky-500 bg-sky-50 text-sky-600'
+                                                    : 'border-gray-100 bg-white text-gray-500 hover:border-gray-200'
+                                                }`}
+                                        >
+                                            {l.label}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+
                             <div className="bg-gray-50 p-4 rounded-xl text-gray-500 text-sm font-medium">
                                 رقم الهاتف: <span dir="ltr" className="font-bold text-gray-800">{phone}</span>
                             </div>

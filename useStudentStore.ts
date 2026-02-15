@@ -6,6 +6,7 @@ export interface Student {
     id: string;
     name: string;
     phone: string;
+    level: string;
     loginDate: string;
     lastSeen: string;
 }
@@ -61,7 +62,7 @@ export function useStudentStore() {
         return null;
     }, []);
 
-    const registerStudent = useCallback(async (name: string, phone: string): Promise<string> => {
+    const registerStudent = useCallback(async (name: string, phone: string, level: string): Promise<string> => {
         // Check if student already exists with this phone
         const existing = await loginByPhone(phone);
         if (existing) {
@@ -74,6 +75,7 @@ export function useStudentStore() {
         await set(newStudentRef, {
             name: name.trim(),
             phone: phone.trim(),
+            level: level,
             loginDate: now,
             lastSeen: now,
         });

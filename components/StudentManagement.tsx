@@ -114,9 +114,10 @@ const StudentManagement: React.FC = () => {
                         <div className="hidden md:grid grid-cols-12 gap-4 p-6 border-b border-gray-100 bg-gray-50/50 font-bold text-gray-600 text-sm">
                             <div className="col-span-1 text-center">#</div>
                             <div className="col-span-3">الاسم</div>
-                            <div className="col-span-3">رقم الهاتف</div>
+                            <div className="col-span-2">المرحلة</div>
+                            <div className="col-span-2">رقم الهاتف</div>
                             <div className="col-span-2">تاريخ التسجيل</div>
-                            <div className="col-span-2">آخر ظهور</div>
+                            <div className="col-span-1">آخر ظهور</div>
                             <div className="col-span-1 text-center">إجراء</div>
                         </div>
 
@@ -139,7 +140,15 @@ const StudentManagement: React.FC = () => {
                                         <span className="font-bold text-gray-900">{student.name}</span>
                                     </div>
                                 </div>
-                                <div className="col-span-3 text-gray-600" dir="ltr">
+                                <div className="col-span-2">
+                                    <span className="md:hidden font-bold text-gray-400 ml-2">المرحلة:</span>
+                                    <span className="inline-block px-3 py-1 bg-gray-100 rounded-full text-xs font-bold text-gray-600">
+                                        {student.level === '1st-prep' ? '1 إعدادي' :
+                                            student.level === '2nd-prep' ? '2 إعدادي' :
+                                                student.level === '3rd-prep' ? '3 إعدادي' : 'غير محدد'}
+                                    </span>
+                                </div>
+                                <div className="col-span-2 text-gray-600" dir="ltr">
                                     <span className="md:hidden font-bold text-gray-400 ml-2">الهاتف:</span>
                                     📱 {student.phone}
                                 </div>
@@ -147,7 +156,7 @@ const StudentManagement: React.FC = () => {
                                     <span className="md:hidden font-bold text-gray-400 ml-2">التسجيل:</span>
                                     {formatDate(student.loginDate)}
                                 </div>
-                                <div className="col-span-2 text-gray-500 text-sm">
+                                <div className="col-span-1 text-gray-500 text-sm">
                                     <span className="md:hidden font-bold text-gray-400 ml-2">آخر ظهور:</span>
                                     {formatDate(student.lastSeen)}
                                 </div>

@@ -9,7 +9,6 @@ import AdminDashboard from './components/AdminDashboard';
 import StudentLogin from './components/StudentLogin';
 import StudentManagement from './components/StudentManagement';
 import { useContentStore } from './useContentStore';
-import { VALID_ACCESS_CODES } from './constants';
 import { Lesson } from './types';
 
 const ScienceBackground: React.FC = () => {
@@ -58,6 +57,16 @@ const ScienceBackground: React.FC = () => {
 
 const HomePage: React.FC = () => {
   const { levels, isLoading } = useContentStore();
+  const [isStudentLoggedIn, setIsStudentLoggedIn] = useState(false);
+  const [studentLevel, setStudentLevel] = useState<string | null>(null);
+
+  useEffect(() => {
+    const loggedIn = sessionStorage.getItem('student_logged_in') === 'true';
+    const level = sessionStorage.getItem('student_level');
+    setIsStudentLoggedIn(loggedIn);
+    setStudentLevel(level);
+  }, []);
+
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center relative z-10">
@@ -68,22 +77,57 @@ const HomePage: React.FC = () => {
       </div>
     );
   }
+
+  // Filter levels based on student's selection
+  const displayedLevels = isStudentLoggedIn
+    ? levels.filter(l => l.id === studentLevel)
+    : [];
+
   return (
     <div className="relative">
       <Hero />
-      <section id="levels" className="py-24 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-        <div className="text-center mb-16">
-          <h2 className="text-4xl font-extrabold text-gray-900">اختر المرحلة الدراسية</h2>
-          <div className="mt-4 h-1.5 w-24 bg-sky-500 mx-auto rounded-full"></div>
-          <p className="mt-6 text-gray-600 max-w-2xl mx-auto text-lg">
-            كل ما يحتاجه طالب المرحلة الإعدادية للتفوق في مادة العلوم في مكان واحد.        </p>
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-12">
-          {levels.map(level => (
-            <PrepLevelCard key={level.id} data={level} />
-          ))}
-        </div>
-      </section>
+
+      {isStudentLoggedIn && (
+        <section id="levels" className="py-24 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+          <div className="text-center mb-16">
+            <h2 className="text-4xl font-extrabold text-gray-900">مرحلتك الدراسية</h2>
+            <div className="mt-4 h-1.5 w-24 bg-sky-500 mx-auto rounded-full"></div>
+            <p className="mt-6 text-gray-600 max-w-2xl mx-auto text-lg">
+              كل ما تحتاجه للتفوق في مادة العلوم.
+            </p>
+          </div>
+
+          {displayedLevels.length > 0 ? (
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-12 justify-center">
+              {displayedLevels.map(level => (
+                <PrepLevelCard key={level.id} data={level} />
+              ))}
+            </div>
+          ) : (
+            <div className="text-center p-10 bg-white/50 rounded-3xl border border-gray-100">
+              <p className="text-xl text-gray-500 font-bold">لم يتم العثور على محتوى للمرحلة المختارة.</p>
+              <Link to="/student-login" className="mt-4 inline-block text-sky-600 font-bold hover:underline">تسجيل الخروج وتغيير المرحلة</Link>
+            </div>
+          )}
+        </section>
+      )}
+
+      {!isStudentLoggedIn && (
+        <section className="py-16 max-w-4xl mx-auto px-4 relative z-10 text-center">
+          <div className="bg-gradient-to-br from-sky-500 to-teal-400 rounded-[3rem] p-12 text-white shadow-xl shadow-sky-200 transform hover:scale-[1.02] transition-all duration-500">
+            <h2 className="text-4xl font-extrabold mb-6">ابدأ رحلتك التعليمية الآن</h2>
+            <p className="text-xl opacity-90 mb-10 max-w-2xl mx-auto">
+              سجل دخولك الآن للوصول إلى محتوى مرحلتك الدراسية ومتابعة دروسك أولاً بأول.
+            </p>
+            <Link
+              to="/student-login"
+              className="inline-block bg-white text-sky-600 px-10 py-4 rounded-2xl font-bold text-xl hover:bg-sky-50 transition-all shadow-lg hover:shadow-xl transform active:scale-95"
+            >
+              تسجيل الدخول للطالب
+            </Link>
+          </div>
+        </section>
+      )}
     </div>
   );
 };
@@ -161,33 +205,8 @@ const ContentPage: React.FC<{ type: 'videos' | 'notes' }> = ({ type }) => {
   const { levelId } = useParams<{ levelId: string }>();
   const { levels, isLoading } = useContentStore();
   const level = levels.find(l => l.id === levelId);
-  const [accessCode, setAccessCode] = useState('');
-  const [isUnlocked, setIsUnlocked] = useState(false);
-  const [error, setError] = useState('');
-
-  // Persist unlock status in session storage
-  useEffect(() => {
-    const unlocked = sessionStorage.getItem(`unlocked_${levelId}`);
-    if (unlocked === 'true') {
-      setIsUnlocked(true);
-    }
-  }, [levelId]);
 
   if (!level) return <div className="p-20 text-center font-bold text-2xl">المرحلة غير موجودة.</div>;
-
-  const handleVerifyCode = (e: React.FormEvent) => {
-    e.preventDefault();
-    const trimmedCode = accessCode.trim();
-    if (VALID_ACCESS_CODES.includes(trimmedCode)) {
-      setIsUnlocked(true);
-      setError('');
-      sessionStorage.setItem(`unlocked_${levelId}`, 'true');
-    } else {
-      setError('كود التفعيل غير صحيح، يرجى المحاولة مرة أخرى.');
-    }
-  };
-
-  const showLockGate = type === 'videos' && !isUnlocked;
 
   return (
     <div className="min-h-screen pb-32 relative z-10">
@@ -200,64 +219,34 @@ const ContentPage: React.FC<{ type: 'videos' | 'notes' }> = ({ type }) => {
       </div>
 
       <div className="max-w-7xl mx-auto px-4 -mt-32">
-        {showLockGate ? (
-          <div className="bg-glass rounded-[2.5rem] shadow-2xl p-10 md:p-16 text-center max-w-xl mx-auto border border-white/50">
-            <div className="w-24 h-24 bg-sky-50 rounded-3xl flex items-center justify-center mx-auto mb-8 text-sky-600 shadow-inner">
-              <svg className="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
-              </svg>
-            </div>
-            <h2 className="text-3xl font-bold text-gray-900 mb-4">المحتوى محمي</h2>
-            <p className="text-gray-500 mb-10 text-lg">يرجى إدخال الكود الخاص بك للبدء في مشاهدة الحصص.</p>
-
-            <form onSubmit={handleVerifyCode} className="space-y-6">
-              <input
-                type="text"
-                value={accessCode}
-                onChange={(e) => setAccessCode(e.target.value)}
-                placeholder="أدخل كود التفعيل"
-                className="w-full p-5 bg-white border border-gray-200 rounded-2xl text-center text-xl font-bold focus:ring-4 focus:ring-sky-500/20 focus:border-sky-500 outline-none transition-all shadow-sm"
-              />
-              {error && <p className="text-red-500 font-bold">{error}</p>}
-              <button
-                type="submit"
-                className="w-full py-5 science-gradient text-white rounded-2xl font-bold text-xl hover:shadow-2xl transition-all transform active:scale-95"
-              >
-                تفعيل الآن
-              </button>
-            </form>
-            <p className="mt-6 text-sm text-gray-400">إذا لم يكن لديك كود، يرجى التواصل مع الأستاذة صفاء للحصول على كود خاص بك.</p>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
-            {level.lessons.map(lesson => (
-              <React.Fragment key={lesson.id}>
-                {type === 'videos' ? (
-                  <VideoLessonCard lesson={lesson} />
-                ) : (
-                  <div className="bg-glass rounded-[2rem] shadow-xl overflow-hidden border border-white/50 flex flex-col hover:shadow-2xl transition-all group">
-                    <div className="h-48 bg-teal-50 flex items-center justify-center text-teal-600">
-                      <svg className="w-16 h-16" fill="currentColor" viewBox="0 0 20 20"><path d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z"></path><path fillRule="evenodd" d="M4 5a2 2 0 012-2 3 3 0 003 3h2a3 3 0 003-3 2 2 0 012 2v11a2 2 0 01-2 2H6a2 2 0 01-2-2V5zm3 4a1 1 0 000 2h.01a1 1 0 100-2H7zm3 0a1 1 0 000 2h3a1 1 0 100-2h-3zm-3 4a1 1 0 100 2h.01a1 1 0 100-2H7zm3 0a1 1 0 100 2h3a1 1 0 100-2h-3z" clipRule="evenodd"></path></svg>
-                    </div>
-                    <div className="p-8">
-                      <h3 className="text-2xl font-bold text-gray-900 mb-3">{lesson.title}</h3>
-                      <p className="text-gray-500 leading-relaxed mb-8">{lesson.description}</p>
-                      <a
-                        href={lesson.pdfUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="w-full py-4 bg-teal-600 text-white rounded-2xl font-bold hover:bg-teal-700 transition-all flex items-center justify-center gap-3 shadow-lg shadow-teal-600/20"
-                      >
-                        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
-                        فتح المذكرة
-                      </a>
-                    </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
+          {level.lessons.map(lesson => (
+            <React.Fragment key={lesson.id}>
+              {type === 'videos' ? (
+                <VideoLessonCard lesson={lesson} />
+              ) : (
+                <div className="bg-glass rounded-[2rem] shadow-xl overflow-hidden border border-white/50 flex flex-col hover:shadow-2xl transition-all group">
+                  <div className="h-48 bg-teal-50 flex items-center justify-center text-teal-600">
+                    <svg className="w-16 h-16" fill="currentColor" viewBox="0 0 20 20"><path d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z"></path><path fillRule="evenodd" d="M4 5a2 2 0 012-2 3 3 0 003 3h2a3 3 0 003-3 2 2 0 012 2v11a2 2 0 01-2 2H6a2 2 0 01-2-2V5zm3 4a1 1 0 000 2h.01a1 1 0 100-2H7zm3 0a1 1 0 000 2h3a1 1 0 100-2h-3zm-3 4a1 1 0 100 2h.01a1 1 0 100-2H7zm3 0a1 1 0 100 2h3a1 1 0 100-2h-3z" clipRule="evenodd"></path></svg>
                   </div>
-                )}
-              </React.Fragment>
-            ))}
-          </div>
-        )}
+                  <div className="p-8">
+                    <h3 className="text-2xl font-bold text-gray-900 mb-3">{lesson.title}</h3>
+                    <p className="text-gray-500 leading-relaxed mb-8">{lesson.description}</p>
+                    <a
+                      href={lesson.pdfUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="w-full py-4 bg-teal-600 text-white rounded-2xl font-bold hover:bg-teal-700 transition-all flex items-center justify-center gap-3 shadow-lg shadow-teal-600/20"
+                    >
+                      <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
+                      فتح المذكرة
+                    </a>
+                  </div>
+                </div>
+              )}
+            </React.Fragment>
+          ))}
+        </div>
       </div>
     </div>
   );
