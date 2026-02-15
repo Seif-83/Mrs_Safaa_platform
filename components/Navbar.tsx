@@ -32,11 +32,7 @@ const Navbar: React.FC = () => {
     <nav className="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-gray-100">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between h-16 items-center">
-          <div className="flex items-center gap-2">
-            <Link to="/" className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-sky-600 to-teal-500">
-              Mrs. Safaa Esmail
-            </Link>
-          </div>
+
 
           <div className="hidden md:flex items-center space-x-reverse space-x-6">
             <Link to="/" className="text-gray-600 hover:text-sky-600 font-medium transition-colors">الرئيسية</Link>
@@ -83,9 +79,9 @@ const Navbar: React.FC = () => {
             onClick={() => setIsMenuOpen(false)}
           ></div>
 
-          {/* Drawer - Slides from Left to Right */}
+          {/* Drawer - Slides from Right to Left */}
           <div
-            className="absolute top-0 left-0 bottom-0 w-3/4 max-w-xs bg-white shadow-2xl flex flex-col animate-slide-in-left"
+            className="absolute top-0 right-0 bottom-0 w-3/4 max-w-xs bg-white shadow-2xl flex flex-col animate-slide-in-right"
           >
             {/* Drawer Header */}
             <div className="p-4 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
