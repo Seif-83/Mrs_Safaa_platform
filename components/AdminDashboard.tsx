@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { useContentStore } from '../useContentStore';
 import { PrepLevel } from '../types';
 
@@ -113,6 +113,12 @@ const AdminDashboard: React.FC = () => {
                     >
                         🔄 استعادة الافتراضي
                     </button>
+                    <Link
+                        to="/admin/students"
+                        className="bg-white/10 hover:bg-white/20 px-5 py-2 rounded-full transition-all text-sm"
+                    >
+                        👥 إدارة الطلاب
+                    </Link>
                     <button
                         onClick={handleLogout}
                         className="bg-red-500/80 hover:bg-red-500 px-5 py-2 rounded-full transition-all text-sm"

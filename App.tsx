@@ -6,6 +6,8 @@ import Hero from './components/Hero';
 import PrepLevelCard from './components/PrepLevelCard';
 import AdminLogin from './components/AdminLogin';
 import AdminDashboard from './components/AdminDashboard';
+import StudentLogin from './components/StudentLogin';
+import StudentManagement from './components/StudentManagement';
 import { useContentStore } from './useContentStore';
 import { VALID_ACCESS_CODES } from './constants';
 
@@ -211,6 +213,8 @@ const App: React.FC = () => {
             <Route path="/level/:levelId/notes" element={<ContentPage type="notes" />} />
             <Route path="/admin-login" element={<AdminLogin />} />
             <Route path="/admin" element={<AdminDashboard />} />
+            <Route path="/student-login" element={<StudentLogin />} />
+            <Route path="/admin/students" element={<StudentManagement />} />
           </Routes>
         </main>
 
