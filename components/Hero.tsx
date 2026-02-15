@@ -18,12 +18,6 @@ const Hero: React.FC = () => {
             <p className="mt-8 text-xl text-gray-600 leading-relaxed max-w-2xl lg:ml-0 lg:mr-auto">
               منصة تعليمية متكاملة لطلاب المرحلة الإعدادية. شروحات مبسطة، فيديوهات تفاعلية، ومذكرات شاملة لكل درس.            </p>
             <div className="mt-12 flex flex-wrap gap-6 justify-center">
-              <button
-                onClick={() => document.getElementById('levels')?.scrollIntoView({ behavior: 'smooth' })}
-                className="px-12 py-5 border border-transparent text-xl font-bold rounded-2xl text-white science-gradient hover:shadow-2xl transition-all transform hover:-translate-y-1 cursor-pointer"
-              >
-                ابدأ الدراسة الآن
-              </button>
               <a href="https://wa.me/201222966617" className="px-12 py-5 border-2 border-sky-100 text-xl font-bold rounded-2xl text-sky-700 bg-white/50 backdrop-blur-sm hover:bg-sky-50 transition-all">
                 تواصل معنا
               </a>
