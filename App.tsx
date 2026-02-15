@@ -10,6 +10,7 @@ import StudentLogin from './components/StudentLogin';
 import StudentManagement from './components/StudentManagement';
 import { useContentStore } from './useContentStore';
 import { VALID_ACCESS_CODES } from './constants';
+import { Lesson } from './types';
 
 const ScienceBackground: React.FC = () => {
   return (
@@ -83,6 +84,75 @@ const HomePage: React.FC = () => {
           ))}
         </div>
       </section>
+    </div>
+  );
+};
+
+const VideoLessonCard: React.FC<{ lesson: Lesson }> = ({ lesson }) => {
+  const [isLocked, setIsLocked] = useState(!!lesson.code);
+  const [code, setCode] = useState('');
+  const [error, setError] = useState('');
+
+  // Check if already unlocked in session
+  useEffect(() => {
+    if (lesson.code) {
+      const unlocked = sessionStorage.getItem(`video_unlocked_${lesson.id}`);
+      if (unlocked === 'true') {
+        setIsLocked(false);
+      }
+    }
+  }, [lesson.id, lesson.code]);
+
+  const handleUnlock = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (code.trim() === lesson.code) {
+      setIsLocked(false);
+      sessionStorage.setItem(`video_unlocked_${lesson.id}`, 'true');
+      setError('');
+    } else {
+      setError('الكود غير صحيح');
+    }
+  };
+
+  return (
+    <div className="bg-glass rounded-[2rem] shadow-xl overflow-hidden border border-white/50 flex flex-col hover:shadow-2xl transition-all group">
+      <div className="aspect-video bg-black relative">
+        {isLocked ? (
+          <div className="absolute inset-0 bg-gray-900 flex flex-col items-center justify-center p-6 text-center">
+            <div className="w-12 h-12 bg-gray-800 rounded-full flex items-center justify-center mb-3">
+              <span className="text-2xl">🔒</span>
+            </div>
+            <h4 className="text-white font-bold mb-2">هذا الفيديو محمي بكود</h4>
+            <form onSubmit={handleUnlock} className="w-full max-w-xs space-y-2">
+              <input
+                type="text"
+                value={code}
+                onChange={e => setCode(e.target.value)}
+                placeholder="أدخل كود الفيديو"
+                className="w-full px-4 py-2 rounded-lg bg-gray-800 border border-gray-700 text-white text-center focus:ring-2 focus:ring-sky-500 outline-none"
+              />
+              {error && <p className="text-red-500 text-sm font-bold">{error}</p>}
+              <button
+                type="submit"
+                className="w-full py-2 bg-sky-600 hover:bg-sky-700 text-white rounded-lg font-bold transition-colors"
+              >
+                مشاهدة
+              </button>
+            </form>
+          </div>
+        ) : (
+          <iframe
+            className="w-full h-full"
+            src={lesson.videoUrl}
+            title={lesson.title}
+            allowFullScreen
+          ></iframe>
+        )}
+      </div>
+      <div className="p-8">
+        <h3 className="text-2xl font-bold text-gray-900 mb-3">{lesson.title}</h3>
+        <p className="text-gray-500 leading-relaxed mb-8">{lesson.description}</p>
+      </div>
     </div>
   );
 };
@@ -161,37 +231,30 @@ const ContentPage: React.FC<{ type: 'videos' | 'notes' }> = ({ type }) => {
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
             {level.lessons.map(lesson => (
-              <div key={lesson.id} className="bg-glass rounded-[2rem] shadow-xl overflow-hidden border border-white/50 flex flex-col hover:shadow-2xl transition-all group">
+              <React.Fragment key={lesson.id}>
                 {type === 'videos' ? (
-                  <div className="aspect-video bg-black relative">
-                    <iframe
-                      className="w-full h-full"
-                      src={lesson.videoUrl}
-                      title={lesson.title}
-                      allowFullScreen
-                    ></iframe>
-                  </div>
+                  <VideoLessonCard lesson={lesson} />
                 ) : (
-                  <div className="h-48 bg-teal-50 flex items-center justify-center text-teal-600">
-                    <svg className="w-16 h-16" fill="currentColor" viewBox="0 0 20 20"><path d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z"></path><path fillRule="evenodd" d="M4 5a2 2 0 012-2 3 3 0 003 3h2a3 3 0 003-3 2 2 0 012 2v11a2 2 0 01-2 2H6a2 2 0 01-2-2V5zm3 4a1 1 0 000 2h.01a1 1 0 100-2H7zm3 0a1 1 0 000 2h3a1 1 0 100-2h-3zm-3 4a1 1 0 100 2h.01a1 1 0 100-2H7zm3 0a1 1 0 100 2h3a1 1 0 100-2h-3z" clipRule="evenodd"></path></svg>
+                  <div className="bg-glass rounded-[2rem] shadow-xl overflow-hidden border border-white/50 flex flex-col hover:shadow-2xl transition-all group">
+                    <div className="h-48 bg-teal-50 flex items-center justify-center text-teal-600">
+                      <svg className="w-16 h-16" fill="currentColor" viewBox="0 0 20 20"><path d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z"></path><path fillRule="evenodd" d="M4 5a2 2 0 012-2 3 3 0 003 3h2a3 3 0 003-3 2 2 0 012 2v11a2 2 0 01-2 2H6a2 2 0 01-2-2V5zm3 4a1 1 0 000 2h.01a1 1 0 100-2H7zm3 0a1 1 0 000 2h3a1 1 0 100-2h-3zm-3 4a1 1 0 100 2h.01a1 1 0 100-2H7zm3 0a1 1 0 100 2h3a1 1 0 100-2h-3z" clipRule="evenodd"></path></svg>
+                    </div>
+                    <div className="p-8">
+                      <h3 className="text-2xl font-bold text-gray-900 mb-3">{lesson.title}</h3>
+                      <p className="text-gray-500 leading-relaxed mb-8">{lesson.description}</p>
+                      <a
+                        href={lesson.pdfUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="w-full py-4 bg-teal-600 text-white rounded-2xl font-bold hover:bg-teal-700 transition-all flex items-center justify-center gap-3 shadow-lg shadow-teal-600/20"
+                      >
+                        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
+                        فتح المذكرة
+                      </a>
+                    </div>
                   </div>
                 )}
-                <div className="p-8">
-                  <h3 className="text-2xl font-bold text-gray-900 mb-3">{lesson.title}</h3>
-                  <p className="text-gray-500 leading-relaxed mb-8">{lesson.description}</p>
-                  {type === 'notes' && (
-                    <a
-                      href={lesson.pdfUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="w-full py-4 bg-teal-600 text-white rounded-2xl font-bold hover:bg-teal-700 transition-all flex items-center justify-center gap-3 shadow-lg shadow-teal-600/20"
-                    >
-                      <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
-                      فتح المذكرة
-                    </a>
-                  )}
-                </div>
-              </div>
+              </React.Fragment>
             ))}
           </div>
         )}

@@ -38,6 +38,7 @@ const AdminDashboard: React.FC = () => {
     const [newVideoUrl, setNewVideoUrl] = useState('');
     const [newPdfUrl, setNewPdfUrl] = useState('');
     const [newDescription, setNewDescription] = useState('');
+    const [newCode, setNewCode] = useState('');
 
     // Auth guard
     useEffect(() => {
@@ -59,6 +60,7 @@ const AdminDashboard: React.FC = () => {
             videoUrl: convertToEmbedUrl(newVideoUrl),
             pdfUrl: newPdfUrl.trim(),
             description: newDescription.trim(),
+            code: newCode.trim(),
         });
 
         // Reset form
@@ -66,6 +68,7 @@ const AdminDashboard: React.FC = () => {
         setNewVideoUrl('');
         setNewPdfUrl('');
         setNewDescription('');
+        setNewCode('');
         setShowAddForm(false);
         showSuccess('تم إضافة الدرس بنجاح ✓');
     };
@@ -205,6 +208,17 @@ const AdminDashboard: React.FC = () => {
                                         <p className="text-xs text-gray-400 mt-1 text-left" dir="ltr">يقبل أي صيغة: youtube.com/watch?v=... أو youtu.be/... أو youtube.com/embed/...</p>
                                     </div>
                                     <div>
+                                        <label className="block text-gray-700 font-bold mb-2">كود الفيديو (اختياري)</label>
+                                        <input
+                                            type="text"
+                                            value={newCode}
+                                            onChange={e => setNewCode(e.target.value)}
+                                            placeholder="أدخل كود لفتح الفيديو"
+                                            className="w-full p-4 bg-white border border-gray-200 rounded-xl focus:ring-4 focus:ring-sky-500/20 focus:border-sky-500 outline-none transition-all text-right"
+                                        />
+                                        <p className="text-xs text-gray-400 mt-1">اتركه فارغاً إذا كنت تريد الفيديو متاحاً للجميع.</p>
+                                    </div>
+                                    <div>
                                         <label className="block text-gray-700 font-bold mb-2">رابط المذكرة (PDF)</label>
                                         <input
                                             type="text"
@@ -265,6 +279,11 @@ const AdminDashboard: React.FC = () => {
                                                         )}
                                                         {lesson.pdfUrl && (
                                                             <span className="bg-teal-50 text-teal-600 px-3 py-1 rounded-full font-medium">📄 مذكرة</span>
+                                                        )}
+                                                        {lesson.code && (
+                                                            <span className="bg-amber-50 text-amber-600 px-3 py-1 rounded-full font-medium flex items-center gap-1">
+                                                                🔒 كود: {lesson.code}
+                                                            </span>
                                                         )}
                                                     </div>
                                                 </div>

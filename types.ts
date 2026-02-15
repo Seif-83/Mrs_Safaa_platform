@@ -7,6 +7,7 @@ export interface Lesson {
   videoUrl: string;
   pdfUrl: string;
   description: string;
+  code?: string;
 }
 
 export interface PrepData {
