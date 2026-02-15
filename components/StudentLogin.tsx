@@ -59,7 +59,7 @@ const StudentLogin: React.FC = () => {
                             type="text"
                             value={name}
                             onChange={(e) => { setName(e.target.value); setError(''); }}
-                            placeholder="الاسم بالكامل"
+                            placeholder="الاسم بالكامل بالعربي"
                             className="w-full p-5 bg-white border border-gray-200 rounded-2xl text-center text-lg font-bold focus:ring-4 focus:ring-sky-500/20 focus:border-sky-500 outline-none transition-all shadow-sm"
                             autoFocus
                         />
