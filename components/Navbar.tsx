@@ -1,5 +1,6 @@
 
 import React, { useState } from 'react';
+import { createPortal } from 'react-dom';
 import { Link, useNavigate } from 'react-router-dom';
 
 const Navbar: React.FC = () => {
@@ -73,32 +74,66 @@ const Navbar: React.FC = () => {
       </div>
 
       {/* Mobile Menu with smooth animation */}
-      <div
-        className="md:hidden overflow-hidden transition-all duration-300 ease-in-out"
-        style={{ maxHeight: isMenuOpen ? '200px' : '0px', opacity: isMenuOpen ? 1 : 0 }}
-      >
-        <div className="bg-white/95 backdrop-blur-md border-t border-gray-100 shadow-lg px-4 py-4 space-y-3">
-          <Link to="/" onClick={() => setIsMenuOpen(false)} className="block text-right text-lg font-medium text-gray-700 hover:text-sky-600 py-2 px-4 rounded-xl hover:bg-sky-50 transition-all">
-            الرئيسية
-          </Link>
-          <a href="#levels" onClick={handleScrollToLevels} className="block text-right text-lg font-medium text-gray-700 hover:text-sky-600 py-2 px-4 rounded-xl hover:bg-sky-50 transition-all">
-            المراحل الدراسية
-          </a>
-          {isStudentLoggedIn ? (
-            <div className="flex items-center justify-between py-2 px-4">
-              <span className="text-sky-600 font-bold">{studentName}</span>
-              <button onClick={handleStudentLogout} className="text-red-500 text-sm font-bold">خروج</button>
+      {/* Mobile Menu Overlay & Drawer - Portalled to body to match viewport height */}
+      {isMenuOpen && createPortal(
+        <div className="fixed inset-0 z-[100]">
+          {/* Backdrop */}
+          <div
+            className="absolute inset-0 bg-black/40 backdrop-blur-sm transition-opacity animate-fade-in"
+            onClick={() => setIsMenuOpen(false)}
+          ></div>
+
+          {/* Drawer - Slides from Left to Right */}
+          <div
+            className="absolute top-0 left-0 bottom-0 w-3/4 max-w-xs bg-white shadow-2xl flex flex-col animate-slide-in-left"
+          >
+            {/* Drawer Header */}
+            <div className="p-4 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
+              <span className="font-bold text-gray-900">القائمة</span>
+              <button onClick={() => setIsMenuOpen(false)} className="p-2 text-gray-500 hover:text-red-500 transition-colors">
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" /></svg>
+              </button>
             </div>
-          ) : (
-            <Link to="/student-login" onClick={() => setIsMenuOpen(false)} className="block text-right text-lg font-medium text-sky-600 py-2 px-4 rounded-xl bg-sky-50 transition-all">
-              تسجيل الدخول
-            </Link>
-          )}
-          <Link to="/admin-login" onClick={() => setIsMenuOpen(false)} className="block text-right text-sm font-medium text-gray-400 hover:text-sky-600 py-2 px-4 rounded-xl hover:bg-sky-50 transition-all">
-            ⚙️ لوحة التحكم
-          </Link>
-        </div>
-      </div>
+
+            {/* Drawer Links - vertically scrollable if needed */}
+            <div className="flex-1 overflow-y-auto py-4 px-4 space-y-2">
+              <Link to="/" onClick={() => setIsMenuOpen(false)} className="block text-right text-lg font-medium text-gray-700 hover:text-sky-600 py-3 px-4 rounded-xl hover:bg-sky-50 transition-all border-b border-gray-50">
+                الرئيسية 🏠
+              </Link>
+
+              <a href="#levels" onClick={handleScrollToLevels} className="block text-right text-lg font-medium text-gray-700 hover:text-sky-600 py-3 px-4 rounded-xl hover:bg-sky-50 transition-all border-b border-gray-50">
+                المراحل الدراسية 📚
+              </a>
+
+              {isStudentLoggedIn ? (
+                <div className="bg-sky-50 rounded-2xl p-4 mt-2">
+                  <div className="text-right mb-3">
+                    <span className="text-xs text-gray-500 block mb-1">مرحباً بك</span>
+                    <span className="text-sky-700 font-bold text-lg">{studentName} 🎓</span>
+                  </div>
+                  <button
+                    onClick={handleStudentLogout}
+                    className="w-full py-2 bg-white text-red-500 border border-red-100 rounded-xl text-sm font-bold shadow-sm hover:bg-red-50 transition-all"
+                  >
+                    تسجيل الخروج
+                  </button>
+                </div>
+              ) : (
+                <Link to="/student-login" onClick={() => setIsMenuOpen(false)} className="block text-center text-lg font-bold text-white py-3 px-4 rounded-xl bg-gradient-to-r from-sky-500 to-teal-400 shadow-lg shadow-sky-500/20 mt-4 transition-transform active:scale-95">
+                  تسجيل الدخول للطالب 👨‍🎓
+                </Link>
+              )}
+
+              <div className="border-t border-gray-100 my-4 pt-4">
+                <Link to="/admin-login" onClick={() => setIsMenuOpen(false)} className="flex items-center justify-end gap-2 text-sm font-medium text-gray-400 hover:text-sky-600 py-2 px-4 transition-colors">
+                  لوحة التحكم ⚙️
+                </Link>
+              </div>
+            </div>
+          </div>
+        </div>,
+        document.body
+      )}
     </nav>
   );
 };
