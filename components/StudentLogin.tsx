@@ -4,17 +4,18 @@ import { useNavigate } from 'react-router-dom';
 import { useStudentStore } from '../useStudentStore';
 
 const StudentLogin: React.FC = () => {
+    const [step, setStep] = useState<1 | 2>(1);
     const [name, setName] = useState('');
     const [phone, setPhone] = useState('');
     const [error, setError] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
     const navigate = useNavigate();
-    const { registerStudent } = useStudentStore();
+    const { registerStudent, loginByPhone } = useStudentStore();
 
-    const handleSubmit = async (e: React.FormEvent) => {
+    const handlePhoneSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!name.trim() || !phone.trim()) {
-            setError('يرجى إدخال الاسم ورقم الهاتف');
+        if (!phone.trim()) {
+            setError('يرجى إدخال رقم الهاتف');
             return;
         }
 
@@ -26,15 +27,48 @@ const StudentLogin: React.FC = () => {
         }
 
         setIsSubmitting(true);
+        setError('');
+
+        try {
+            // Check if user exists
+            const student = await loginByPhone(phoneClean);
+
+            if (student) {
+                // Login immediately
+                sessionStorage.setItem('student_logged_in', 'true');
+                sessionStorage.setItem('student_name', student.name);
+                sessionStorage.setItem('student_phone', student.phone);
+                navigate('/');
+            } else {
+                // Move to registration step
+                setStep(2);
+            }
+        } catch (err) {
+            setError('حدث خطأ، يرجى المحاولة مرة أخرى');
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
+
+    const handleRegisterSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!name.trim()) {
+            setError('يرجى إدخال الاسم');
+            return;
+        }
+
+        setIsSubmitting(true);
+        const phoneClean = phone.trim().replace(/\s/g, '');
+
         try {
             await registerStudent(name.trim(), phoneClean);
-            // Store in session so we know the student is logged in
+            // Login after registration
             sessionStorage.setItem('student_logged_in', 'true');
             sessionStorage.setItem('student_name', name.trim());
             sessionStorage.setItem('student_phone', phoneClean);
             navigate('/');
-        } catch (err) {
-            setError('حدث خطأ، يرجى المحاولة مرة أخرى');
+        } catch (err: any) {
+            setError(err.message || 'حدث خطأ أثناء التسجيل');
         } finally {
             setIsSubmitting(false);
         }
@@ -50,46 +84,72 @@ const StudentLogin: React.FC = () => {
                     </svg>
                 </div>
 
-                <h2 className="text-3xl font-bold text-gray-900 mb-2">تسجيل الدخول</h2>
-                <p className="text-gray-500 mb-10 text-lg">أدخل بياناتك للوصول إلى المحتوى التعليمي</p>
+                {step === 1 ? (
+                    <>
+                        <h2 className="text-3xl font-bold text-gray-900 mb-2">تسجيل الدخول</h2>
+                        <p className="text-gray-500 mb-10 text-lg">أدخل رقم الهاتف للمتابعة</p>
 
-                <form onSubmit={handleSubmit} className="space-y-5">
-                    <div>
-                        <input
-                            type="text"
-                            value={name}
-                            onChange={(e) => { setName(e.target.value); setError(''); }}
-                            placeholder="الاسم بالكامل بالعربي"
-                            className="w-full p-5 bg-white border border-gray-200 rounded-2xl text-center text-lg font-bold focus:ring-4 focus:ring-sky-500/20 focus:border-sky-500 outline-none transition-all shadow-sm"
-                            autoFocus
-                        />
+                        <form onSubmit={handlePhoneSubmit} className="space-y-5">
+                            <div>
+                                <input
+                                    type="tel"
+                                    value={phone}
+                                    onChange={(e) => { setPhone(e.target.value); setError(''); }}
+                                    placeholder="رقم الهاتف"
+                                    className="w-full p-5 bg-white border border-gray-200 rounded-2xl text-center text-lg font-bold focus:ring-4 focus:ring-sky-500/20 focus:border-sky-500 outline-none transition-all shadow-sm"
+                                    dir="ltr"
+                                    autoFocus
+                                />
+                            </div>
+                            {error && <p className="text-red-500 font-bold animate-fade-in">{error}</p>}
+                            <button
+                                type="submit"
+                                disabled={isSubmitting}
+                                className="w-full py-5 science-gradient text-white rounded-2xl font-bold text-xl hover:shadow-2xl transition-all transform active:scale-95 disabled:opacity-60"
+                            >
+                                {isSubmitting ? 'جاري التحقق...' : 'التالي'}
+                            </button>
+                        </form>
+                    </>
+                ) : (
+                    <div className="animate-fade-in">
+                        <h2 className="text-3xl font-bold text-gray-900 mb-2">حساب جديد</h2>
+                        <p className="text-gray-500 mb-10 text-lg">رقم الهاتف غير مسجل. يرجى إدخال اسمك للتسجيل.</p>
+
+                        <form onSubmit={handleRegisterSubmit} className="space-y-5">
+                            <div>
+                                <input
+                                    type="text"
+                                    value={name}
+                                    onChange={(e) => { setName(e.target.value); setError(''); }}
+                                    placeholder="الاسم بالكامل بالعربي"
+                                    className="w-full p-5 bg-white border border-gray-200 rounded-2xl text-center text-lg font-bold focus:ring-4 focus:ring-sky-500/20 focus:border-sky-500 outline-none transition-all shadow-sm"
+                                    autoFocus
+                                />
+                            </div>
+                            <div className="bg-gray-50 p-4 rounded-xl text-gray-500 text-sm font-medium">
+                                رقم الهاتف: <span dir="ltr" className="font-bold text-gray-800">{phone}</span>
+                            </div>
+                            {error && <p className="text-red-500 font-bold animate-fade-in">{error}</p>}
+                            <div className="flex gap-3">
+                                <button
+                                    type="button"
+                                    onClick={() => setStep(1)}
+                                    className="flex-shrink-0 w-16 bg-gray-100 text-gray-600 rounded-2xl font-bold hover:bg-gray-200 transition-all"
+                                >
+                                    ←
+                                </button>
+                                <button
+                                    type="submit"
+                                    disabled={isSubmitting}
+                                    className="flex-1 py-5 science-gradient text-white rounded-2xl font-bold text-xl hover:shadow-2xl transition-all transform active:scale-95 disabled:opacity-60"
+                                >
+                                    {isSubmitting ? 'جاري التسجيل...' : 'تسجيل حساب'}
+                                </button>
+                            </div>
+                        </form>
                     </div>
-                    <div>
-                        <input
-                            type="tel"
-                            value={phone}
-                            onChange={(e) => { setPhone(e.target.value); setError(''); }}
-                            placeholder="رقم الهاتف"
-                            className="w-full p-5 bg-white border border-gray-200 rounded-2xl text-center text-lg font-bold focus:ring-4 focus:ring-sky-500/20 focus:border-sky-500 outline-none transition-all shadow-sm"
-                            dir="ltr"
-                        />
-                    </div>
-                    {error && <p className="text-red-500 font-bold animate-fade-in">{error}</p>}
-                    <button
-                        type="submit"
-                        disabled={isSubmitting}
-                        className="w-full py-5 science-gradient text-white rounded-2xl font-bold text-xl hover:shadow-2xl transition-all transform active:scale-95 disabled:opacity-60"
-                    >
-                        {isSubmitting ? (
-                            <span className="flex items-center justify-center gap-3">
-                                <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-                                جاري التسجيل...
-                            </span>
-                        ) : (
-                            'دخول'
-                        )}
-                    </button>
-                </form>
+                )}
 
                 <p className="mt-6 text-sm text-gray-400">بيانات التسجيل تُستخدم للمتابعة مع المعلم فقط.</p>
             </div>

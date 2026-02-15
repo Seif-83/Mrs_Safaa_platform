@@ -42,22 +42,30 @@ export function useStudentStore() {
         return () => unsubscribe();
     }, []);
 
-    const registerStudent = useCallback(async (name: string, phone: string): Promise<string> => {
-        // Check if student already exists with this phone
+    const loginByPhone = useCallback(async (phone: string): Promise<Student | null> => {
         const dbRef = ref(db, DB_PATH);
         const snapshot = await get(dbRef);
 
         if (snapshot.exists()) {
             const data = snapshot.val();
-            const existing = Object.entries(data).find(
+            const existingEntry = Object.entries(data).find(
                 ([_, student]: [string, any]) => student.phone === phone
             );
-            if (existing) {
+            if (existingEntry) {
+                const [key, student] = existingEntry;
                 // Update last seen
-                const [key] = existing;
                 await set(ref(db, `${DB_PATH}/${key}/lastSeen`), new Date().toISOString());
-                return key;
+                return { ...(student as any), id: key };
             }
+        }
+        return null;
+    }, []);
+
+    const registerStudent = useCallback(async (name: string, phone: string): Promise<string> => {
+        // Check if student already exists with this phone
+        const existing = await loginByPhone(phone);
+        if (existing) {
+            throw new Error('رقم الهاتف مسجل بالفعل');
         }
 
         // Create new student
@@ -70,11 +78,11 @@ export function useStudentStore() {
             lastSeen: now,
         });
         return newStudentRef.key || '';
-    }, []);
+    }, [loginByPhone]);
 
     const removeStudent = useCallback(async (studentId: string) => {
         await remove(ref(db, `${DB_PATH}/${studentId}`));
     }, []);
 
-    return { students, isLoading, registerStudent, removeStudent };
+    return { students, isLoading, registerStudent, removeStudent, loginByPhone };
 }
