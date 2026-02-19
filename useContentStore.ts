@@ -16,7 +16,13 @@ export function useContentStore() {
 
         const unsubscribe = onValue(dbRef, (snapshot) => {
             if (snapshot.exists()) {
-                setLevels(snapshot.val() as PrepData[]);
+                const data = snapshot.val() as PrepData[];
+                // Ensure all levels have lessons array
+                const validated = (Array.isArray(data) ? data : Object.values(data)).map(level => ({
+                    ...level,
+                    lessons: level.lessons || []
+                }));
+                setLevels(validated);
             } else {
                 // First time: seed Firebase with default data
                 set(dbRef, PREP_LEVELS_DATA);

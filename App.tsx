@@ -305,7 +305,7 @@ const ContentPage: React.FC<{ type: 'videos' | 'notes' }> = ({ type }) => {
 
       <div className="max-w-7xl mx-auto px-4 -mt-32">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
-          {level.lessons.map(lesson => (
+          {(level.lessons || []).map(lesson => (
             <React.Fragment key={lesson.id}>
                 {type === 'videos' ? (
                 <VideoLessonCard lesson={lesson} levelId={level.id} />
