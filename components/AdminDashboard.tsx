@@ -261,17 +261,7 @@ const AdminDashboard: React.FC = () => {
                                         />
                                         <p className="text-xs text-gray-400 mt-1 text-left" dir="ltr">يقبل أي صيغة: youtube.com/watch?v=... أو youtu.be/... أو youtube.com/embed/...</p>
                                     </div>
-                                    <div>
-                                        <label className="block text-gray-700 font-bold mb-2">كود الفيديو (اختياري)</label>
-                                        <input
-                                            type="text"
-                                            value={newCode}
-                                            onChange={e => setNewCode(e.target.value)}
-                                            placeholder="أدخل كود لفتح الفيديو"
-                                            className="w-full p-4 bg-white border border-gray-200 rounded-xl focus:ring-4 focus:ring-sky-500/20 focus:border-sky-500 outline-none transition-all text-right"
-                                        />
-                                        <p className="text-xs text-gray-400 mt-1">اتركه فارغاً إذا كنت تريد الفيديو متاحاً للجميع.</p>
-                                    </div>
+                                    
                                     <div>
                                         <label className="block text-gray-700 font-bold mb-2">رابط المذكرة (PDF)</label>
                                         <input
