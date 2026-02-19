@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useExamStore } from '../useExamStore';
 import { useContentStore } from '../useContentStore';
 import { PrepLevel } from '../types';
 
 const AdminExams: React.FC = () => {
+  const navigate = useNavigate();
   const { exams, createExam, updateExam, deleteExam } = useExamStore();
   const { levels } = useContentStore();
 
@@ -69,6 +71,9 @@ const AdminExams: React.FC = () => {
       <div className="science-gradient pt-28 pb-20 text-white text-center px-4">
         <h1 className="text-4xl md:text-5xl font-extrabold mb-3">إدارة الاختبارات</h1>
         <p className="text-sky-100 text-xl">أنشئ اختبارات لتتبع مستوى الطلاب</p>
+        <button onClick={() => navigate(-1)} className="mt-8 inline-block bg-white/10 hover:bg-white/20 px-6 py-2 rounded-full transition-all">
+          ← العودة للخلف
+        </button>
       </div>
 
       <div className="max-w-6xl mx-auto px-4 -mt-10">
