@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { useExamStore } from '../useExamStore';
 import { useContentStore } from '../useContentStore';
-import { v4 as uuidv4 } from 'uuid';
 import { PrepLevel } from '../types';
 
 const AdminExams: React.FC = () => {
@@ -15,9 +14,11 @@ const AdminExams: React.FC = () => {
   const [questions, setQuestions] = useState<any[]>([]);
   const [saving, setSaving] = useState(false);
 
+  const genId = () => `q-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
+
   const addQuestion = () => {
     setQuestions(qs => [...qs, {
-      id: uuidv4(),
+      id: genId(),
       type: 'mcq',
       prompt: '',
       options: ['', '', '', ''],
