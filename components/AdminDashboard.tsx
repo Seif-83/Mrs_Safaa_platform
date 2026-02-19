@@ -443,7 +443,35 @@ const AdminDashboard: React.FC = () => {
 
                             {/* Existing codes list */}
                             <div className="bg-white border rounded-xl p-4">
-                                <p className="font-bold mb-2">جميع الأكواد لهذا الدرس</p>
+                                <div className="flex items-center justify-between">
+                                    <p className="font-bold mb-2">جميع الأكواد لهذا الدرس</p>
+                                    <button
+                                        onClick={() => {
+                                            // copy all codes (value + used flag)
+                                            const lesson = activeLevel?.lessons.find(l => l.id === selectedLessonId);
+                                            const codes = lesson?.codes ?? [];
+                                            if (codes.length === 0) {
+                                                showSuccess('لا توجد أكواد للنسخ');
+                                                return;
+                                            }
+                                            const text = codes.map(c => `${c.value}${c.used ? ' (مستخدم)' : ''}`).join('\n');
+                                            if (navigator.clipboard && navigator.clipboard.writeText) {
+                                                navigator.clipboard.writeText(text).then(() => showSuccess('تم نسخ جميع الأكواد ✓')).catch(() => showSuccess('فشل نسخ الأكواد'));
+                                            } else {
+                                                // fallback
+                                                const ta = document.createElement('textarea');
+                                                ta.value = text;
+                                                document.body.appendChild(ta);
+                                                ta.select();
+                                                try { document.execCommand('copy'); showSuccess('تم نسخ جميع الأكواد ✓'); } catch { showSuccess('فشل نسخ الأكواد'); }
+                                                document.body.removeChild(ta);
+                                            }
+                                        }}
+                                        className="px-3 py-1 bg-sky-50 text-sky-600 rounded-md text-sm"
+                                    >
+                                        نسخ الكل
+                                    </button>
+                                </div>
                                 <div className="space-y-2 max-h-48 overflow-auto">
                                     {(activeLevel?.lessons.find(l=>l.id===selectedLessonId)?.codes ?? []).map(c => (
                                         <div key={c.value} className="flex items-center justify-between gap-4">
