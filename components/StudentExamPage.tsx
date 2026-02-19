@@ -68,7 +68,17 @@ const StudentExamPage: React.FC = () => {
           <div className="bg-white p-6 rounded-2xl border">
             {exam.questions.map((q, idx) => (
               <div key={q.id} className="mb-6">
-                <h4 className="font-bold mb-2">{idx+1}. {q.prompt}</h4>
+                {(!q.promptType || q.promptType === 'text') && (
+                  <h4 className="font-bold mb-3 text-lg">{idx+1}. {q.prompt}</h4>
+                )}
+                {q.promptType === 'image' && q.promptImageUrl && (
+                  <>
+                    <p className="font-bold mb-2">{idx+1}.</p>
+                    <div className="mb-4 flex justify-center">
+                      <img src={q.promptImageUrl} alt={`سؤال ${idx+1}`} className="max-w-sm max-h-64 rounded-xl border" />
+                    </div>
+                  </>
+                )}
                 {q.type === 'mcq' && (
                   <div className="space-y-2">
                     {q.options?.map((opt, i) => (

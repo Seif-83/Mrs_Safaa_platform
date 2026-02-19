@@ -37,6 +37,8 @@ export interface Question {
   id: string;
   type: QuestionType;
   prompt: string;
+  promptType?: 'text' | 'image'; // text or image prompt
+  promptImageUrl?: string; // image URL if promptType is 'image'
   // For MCQ
   options?: string[];
   correctOptionIndex?: number; // for MCQ

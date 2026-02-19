@@ -21,6 +21,8 @@ const AdminExams: React.FC = () => {
       id: genId(),
       type: 'mcq',
       prompt: '',
+      promptType: 'text', // 'text' or 'image'
+      promptImageUrl: '',
       options: ['', '', '', ''],
       correctOptionIndex: 0,
       points: 1
@@ -45,6 +47,8 @@ const AdminExams: React.FC = () => {
           id: q.id,
           type: q.type,
           prompt: q.prompt,
+          promptType: q.promptType || 'text',
+          promptImageUrl: q.promptImageUrl || '',
           options: q.options,
           correctOptionIndex: q.correctOptionIndex,
           points: q.points
@@ -88,12 +92,48 @@ const AdminExams: React.FC = () => {
             <div className="space-y-4">
               {questions.map((q, idx) => (
                 <div key={q.id} className="p-4 border rounded-xl bg-white">
-                  <div className="flex items-center justify-between">
+                  <div className="flex items-center justify-between mb-3">
                     <strong>سؤال {idx+1}</strong>
-                    <button onClick={() => removeQuestion(q.id)} className="text-red-500">حذف</button>
+                    <button onClick={() => removeQuestion(q.id)} className="text-red-500 text-sm">حذف</button>
                   </div>
-                  <input className="w-full p-2 border rounded mt-2" placeholder="نص السؤال" value={q.prompt} onChange={e=>updateQuestion(q.id, { prompt: e.target.value })} />
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2 mt-3">
+
+                  {/* Prompt Type Toggle */}
+                  <div className="flex items-center gap-3 mb-3 p-2 bg-gray-50 rounded">
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input type="radio" name={`type-${q.id}`} checked={q.promptType !== 'image'} onChange={()=>updateQuestion(q.id, { promptType: 'text' })} />
+                      <span className="text-sm">نص</span>
+                    </label>
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input type="radio" name={`type-${q.id}`} checked={q.promptType === 'image'} onChange={()=>updateQuestion(q.id, { promptType: 'image' })} />
+                      <span className="text-sm">صورة</span>
+                    </label>
+                  </div>
+
+                  {/* Text or Image Prompt */}
+                  {q.promptType !== 'image' ? (
+                    <input className="w-full p-2 border rounded mt-2 mb-3" placeholder="نص السؤال" value={q.prompt} onChange={e=>updateQuestion(q.id, { prompt: e.target.value })} />
+                  ) : (
+                    <div className="mt-2 mb-3">
+                      <input type="file" accept="image/*" className="w-full p-2 border rounded" onChange={e=>{
+                        const file = e.target.files?.[0];
+                        if (file) {
+                          const reader = new FileReader();
+                          reader.onload = (ev) => {
+                            const dataUrl = ev.target?.result as string;
+                            updateQuestion(q.id, { promptImageUrl: dataUrl });
+                          };
+                          reader.readAsDataURL(file);
+                        }
+                      }} />
+                      {q.promptImageUrl && (
+                        <div className="mt-2 p-2 bg-gray-50 rounded flex items-center justify-center">
+                          <img src={q.promptImageUrl} alt="preview" className="max-w-xs max-h-32 rounded" />
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                     {q.options.map((opt: string, i: number) => (
                       <div key={i} className="flex items-center gap-2">
                         <input className="flex-1 p-2 border rounded" value={opt} onChange={e=>{
