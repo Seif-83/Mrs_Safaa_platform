@@ -6,10 +6,16 @@ import Hero from './components/Hero';
 import PrepLevelCard from './components/PrepLevelCard';
 import AdminLogin from './components/AdminLogin';
 import AdminDashboard from './components/AdminDashboard';
+import AdminExams from './components/AdminExams';
+import StudentExams from './components/StudentExams';
+import StudentExamPage from './components/StudentExamPage';
+import AdminExamResults from './components/AdminExamResults';
 import StudentLogin from './components/StudentLogin';
 import StudentManagement from './components/StudentManagement';
 import { useContentStore } from './useContentStore';
 import { Lesson } from './types';
+import { useExamStore } from './useExamStore';
+import ErrorBoundary from './components/ErrorBoundary';
 
 const ScienceBackground: React.FC = () => {
   return (
@@ -60,6 +66,9 @@ const HomePage: React.FC = () => {
   const [isStudentLoggedIn, setIsStudentLoggedIn] = useState(false);
   const [studentLevel, setStudentLevel] = useState<string | null>(null);
 
+  // Always initialize exam store hooks to preserve hook order
+  const { exams } = useExamStore();
+
   useEffect(() => {
     const loggedIn = sessionStorage.getItem('student_logged_in') === 'true';
     const level = sessionStorage.getItem('student_level');
@@ -81,6 +90,9 @@ const HomePage: React.FC = () => {
   // Filter levels based on student's selection
   const displayedLevels = isStudentLoggedIn
     ? levels.filter(l => l.id === studentLevel)
+    : [];
+  const availableExamsForLevel = isStudentLoggedIn && studentLevel
+    ? exams.filter(e => e.published && e.levelId === studentLevel)
     : [];
 
   return (
@@ -108,6 +120,36 @@ const HomePage: React.FC = () => {
               <p className="text-xl text-gray-500 font-bold">لم يتم العثور على محتوى للمرحلة المختارة.</p>
               <Link to="/student-login" className="mt-4 inline-block text-sky-600 font-bold hover:underline">تسجيل الخروج وتغيير المرحلة</Link>
             </div>
+          )}
+          {/* Exams section for the student's level */}
+          {isStudentLoggedIn && (
+            <section className="mt-16">
+              <div className="text-center mb-8">
+                <h3 className="text-3xl font-extrabold">اختبارات لمرحلتك</h3>
+                <p className="text-gray-500 mt-2">حل اختبارات نشرت من قبل المعلم لقياس مستواك</p>
+              </div>
+
+              <div className="max-w-4xl mx-auto px-4">
+                {availableExamsForLevel.length === 0 ? (
+                  <div className="p-8 bg-white rounded-2xl text-center text-gray-500">لا توجد اختبارات منشورة لمرحلتك حالياً.</div>
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {availableExamsForLevel.map(ex => (
+                      <div key={ex.id} className="p-6 bg-white rounded-2xl border flex flex-col justify-between">
+                        <div>
+                          <h4 className="font-bold text-lg">{ex.title}</h4>
+                          <p className="text-sm text-gray-500 mt-2">{ex.description}</p>
+                          <p className="text-xs text-gray-400 mt-2">أسئلة: {ex.questions?.length ?? 0} • زمن: {ex.timeLimitMinutes ?? 'غير محدد'}</p>
+                        </div>
+                        <div className="mt-4">
+                          <Link to={`/exam/${ex.id}`} className="px-4 py-3 bg-sky-600 text-white rounded-xl">ابدأ الاختبار</Link>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </section>
           )}
         </section>
       )}
@@ -302,15 +344,21 @@ const App: React.FC = () => {
         <ScienceBackground />
         <Navbar />
         <main className="flex-grow">
+          <ErrorBoundary>
           <Routes>
             <Route path="/" element={<HomePage />} />
             <Route path="/level/:levelId/videos" element={<ContentPage type="videos" />} />
             <Route path="/level/:levelId/notes" element={<ContentPage type="notes" />} />
             <Route path="/admin-login" element={<AdminLogin />} />
             <Route path="/admin" element={<AdminDashboard />} />
+            <Route path="/admin/exams" element={<AdminExams />} />
+            <Route path="/admin/exam-results" element={<AdminExamResults />} />
+            <Route path="/exams" element={<StudentExams />} />
+            <Route path="/exam/:examId" element={<StudentExamPage />} />
             <Route path="/student-login" element={<StudentLogin />} />
             <Route path="/admin/students" element={<StudentManagement />} />
           </Routes>
+          </ErrorBoundary>
         </main>
 
         <footer className="bg-gray-900 text-gray-400 py-20 px-4 relative z-10">

@@ -176,6 +176,18 @@ const AdminDashboard: React.FC = () => {
                     >
                         👥 إدارة الطلاب
                     </Link>
+                    <Link
+                        to="/admin/exams"
+                        className="bg-white/10 hover:bg-white/20 px-5 py-2 rounded-full transition-all text-sm"
+                    >
+                        📝 إدارة الاختبارات
+                    </Link>
+                    <Link
+                        to="/admin/exam-results"
+                        className="bg-white/10 hover:bg-white/20 px-5 py-2 rounded-full transition-all text-sm"
+                    >
+                        📊 نتائج الاختبارات
+                    </Link>
                     <button
                         onClick={handleLogout}
                         className="bg-red-500/80 hover:bg-red-500 px-5 py-2 rounded-full transition-all text-sm"

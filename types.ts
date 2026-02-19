@@ -29,3 +29,39 @@ export interface ChatMessage {
   role: 'user' | 'model';
   text: string;
 }
+
+// Exams and grading
+export type QuestionType = 'mcq' | 'text';
+
+export interface Question {
+  id: string;
+  type: QuestionType;
+  prompt: string;
+  // For MCQ
+  options?: string[];
+  correctOptionIndex?: number; // for MCQ
+  // Points for the question
+  points?: number;
+}
+
+export interface Exam {
+  id: string;
+  title: string;
+  description?: string;
+  levelId: PrepLevel;
+  questions: Question[];
+  timeLimitMinutes?: number | null;
+  published?: boolean;
+  createdAt?: number;
+}
+
+export interface ExamResult {
+  id: string;
+  examId: string;
+  studentPhone?: string | null;
+  studentName?: string | null;
+  answers: { questionId: string; answer: string | number }[];
+  score: number;
+  maxScore: number;
+  submittedAt: number;
+}
