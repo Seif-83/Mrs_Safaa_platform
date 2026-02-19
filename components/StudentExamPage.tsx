@@ -14,7 +14,7 @@ const StudentExamPage: React.FC = () => {
   const [score, setScore] = useState<number | null>(null);
 
   useEffect(() => {
-    if (!exam) return;
+    if (!exam || !exam.questions) return;
     // initialize answers
     const init: Record<string, any> = {};
     exam.questions.forEach(q => init[q.id] = q.type === 'mcq' ? null : '');
@@ -32,7 +32,7 @@ const StudentExamPage: React.FC = () => {
       let total = 0;
       let max = 0;
       const answersArr: { questionId: string; answer: string | number }[] = [];
-      exam.questions.forEach(q => {
+      (exam.questions || []).forEach(q => {
         const ans = answers[q.id];
         if (q.points) max += q.points; else max += 1;
         if (q.type === 'mcq') {
@@ -66,7 +66,7 @@ const StudentExamPage: React.FC = () => {
       <div className="max-w-3xl mx-auto px-4 -mt-10">
         {score === null ? (
           <div className="bg-white p-6 rounded-2xl border">
-            {exam.questions.map((q, idx) => (
+            {(exam.questions || []).map((q, idx) => (
               <div key={q.id} className="mb-6">
                 {(!q.promptType || q.promptType === 'text') && (
                   <h4 className="font-bold mb-3 text-lg">{idx+1}. {q.prompt}</h4>
@@ -103,7 +103,7 @@ const StudentExamPage: React.FC = () => {
         ) : (
           <div className="bg-white p-8 rounded-2xl border text-center">
             <h3 className="text-2xl font-bold">تمت الإجابة</h3>
-            <p className="mt-4">درجتك: {score} من {exam.questions.reduce((s,q)=>s+(q.points??1),0)}</p>
+            <p className="mt-4">درجتك: {score} من {(exam.questions || []).reduce((s,q)=>s+(q.points??1),0)}</p>
             <div className="mt-6">
               <button onClick={()=>navigate('/exams')} className="px-4 py-2 bg-sky-600 text-white rounded-xl">العودة للاختبارات</button>
             </div>

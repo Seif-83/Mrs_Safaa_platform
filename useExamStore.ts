@@ -16,7 +16,10 @@ export function useExamStore() {
       if (snapshot.exists()) {
         const val = snapshot.val();
         // Firebase RTDB might store as object keyed by id or as array
-        const list: Exam[] = Array.isArray(val) ? val : Object.keys(val).map(k => val[k]);
+        const list: Exam[] = Array.isArray(val) ? val : Object.keys(val).map(k => ({
+          ...val[k],
+          questions: val[k].questions || []
+        }));
         setExams(list);
       } else {
         setExams([]);
