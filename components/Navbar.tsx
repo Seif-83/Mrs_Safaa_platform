@@ -36,7 +36,6 @@ const Navbar: React.FC = () => {
 
           <div className="hidden md:flex items-center space-x-reverse space-x-6">
             <Link to="/" className="text-gray-600 hover:text-sky-600 font-medium transition-colors">الرئيسية</Link>
-            <a href="#levels" onClick={handleScrollToLevels} className="text-gray-600 hover:text-sky-600 font-medium transition-colors">المراحل الدراسية</a>
             {isStudentLoggedIn ? (
               <div className="flex items-center gap-3">
                 <span className="text-sky-600 font-bold text-sm flex items-center gap-1">
@@ -96,10 +95,6 @@ const Navbar: React.FC = () => {
               <Link to="/" onClick={() => setIsMenuOpen(false)} className="block text-right text-lg font-medium text-gray-700 hover:text-sky-600 py-3 px-4 rounded-xl hover:bg-sky-50 transition-all border-b border-gray-50">
                 الرئيسية 🏠
               </Link>
-
-              <a href="#levels" onClick={handleScrollToLevels} className="block text-right text-lg font-medium text-gray-700 hover:text-sky-600 py-3 px-4 rounded-xl hover:bg-sky-50 transition-all border-b border-gray-50">
-                المراحل الدراسية 📚
-              </a>
 
               {isStudentLoggedIn ? (
                 <div className="bg-sky-50 rounded-2xl p-4 mt-2">
