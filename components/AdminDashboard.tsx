@@ -160,39 +160,39 @@ const AdminDashboard: React.FC = () => {
     return (
         <div className="min-h-screen pb-20 relative z-10">
             {/* Header */}
-            <div className="science-gradient pt-28 pb-20 text-white text-center px-4">
-                <h1 className="text-4xl md:text-5xl font-extrabold mb-3">لوحة تحكم المعلم</h1>
-                <p className="text-sky-100 text-xl">إدارة الفيديوهات والمذكرات لكل مرحلة دراسية</p>
-                <div className="mt-6 flex justify-center gap-4">
+            <div className="science-gradient pt-20 md:pt-28 pb-16 md:pb-20 text-white text-center px-4">
+                <h1 className="text-3xl md:text-5xl font-extrabold mb-2 md:mb-3">لوحة تحكم المعلم</h1>
+                <p className="text-sky-100 text-base md:text-xl">إدارة الفيديوهات والمذكرات لكل مرحلة دراسية</p>
+                <div className="mt-6 flex flex-wrap justify-center gap-2 md:gap-4">
                     <button
                         onClick={() => setShowResetConfirm(true)}
-                        className="bg-white/10 hover:bg-white/20 px-5 py-2 rounded-full transition-all text-sm"
+                        className="bg-white/10 hover:bg-white/20 px-3 md:px-5 py-2 rounded-full transition-all text-xs md:text-sm"
                     >
-                        🔄 استعادة الافتراضي
+                        🔄 استعادة
                     </button>
                     <Link
                         to="/admin/students"
-                        className="bg-white/10 hover:bg-white/20 px-5 py-2 rounded-full transition-all text-sm"
+                        className="bg-white/10 hover:bg-white/20 px-3 md:px-5 py-2 rounded-full transition-all text-xs md:text-sm"
                     >
-                        👥 إدارة الطلاب
+                        👥 الطلاب
                     </Link>
                     <Link
                         to="/admin/exams"
-                        className="bg-white/10 hover:bg-white/20 px-5 py-2 rounded-full transition-all text-sm"
+                        className="bg-white/10 hover:bg-white/20 px-3 md:px-5 py-2 rounded-full transition-all text-xs md:text-sm"
                     >
-                        📝 إدارة الاختبارات
+                        📝 اختبارات
                     </Link>
                     <Link
                         to="/admin/exam-results"
-                        className="bg-white/10 hover:bg-white/20 px-5 py-2 rounded-full transition-all text-sm"
+                        className="bg-white/10 hover:bg-white/20 px-3 md:px-5 py-2 rounded-full transition-all text-xs md:text-sm"
                     >
-                        📊 نتائج الاختبارات
+                        📊 النتائج
                     </Link>
                     <button
                         onClick={handleLogout}
-                        className="bg-red-500/80 hover:bg-red-500 px-5 py-2 rounded-full transition-all text-sm"
+                        className="bg-red-500/80 hover:bg-red-500 px-3 md:px-5 py-2 rounded-full transition-all text-xs md:text-sm"
                     >
-                        🚪 تسجيل الخروج
+                        🚪 خروج
                     </button>
                 </div>
             </div>
@@ -206,12 +206,12 @@ const AdminDashboard: React.FC = () => {
                 )}
 
                 {/* Tabs */}
-                <div className="bg-glass rounded-2xl shadow-lg p-2 flex gap-2 mb-8 border border-white/50">
+                <div className="bg-glass rounded-2xl shadow-lg p-1 md:p-2 flex gap-1 md:gap-2 mb-8 border border-white/50 overflow-x-auto">
                     {tabs.map(tab => (
                         <button
                             key={tab.id}
                             onClick={() => { setActiveTab(tab.id); setShowAddForm(false); }}
-                            className={`flex-1 py-4 rounded-xl font-bold text-lg transition-all ${activeTab === tab.id
+                            className={`flex-1 py-3 md:py-4 px-2 md:px-4 rounded-xl font-bold text-xs md:text-lg transition-all whitespace-nowrap ${activeTab === tab.id
                                 ? 'science-gradient text-white shadow-lg'
                                 : 'text-gray-600 hover:bg-gray-100'
                                 }`}
@@ -225,22 +225,22 @@ const AdminDashboard: React.FC = () => {
                 {activeLevel && (
                     <div className="bg-glass rounded-[2rem] shadow-xl border border-white/50 overflow-hidden">
                         {/* Level Header */}
-                        <div className="p-8 border-b border-gray-100 flex flex-col md:flex-row items-center justify-between gap-4">
+                        <div className="p-4 md:p-8 border-b border-gray-100 flex flex-col md:flex-row items-start md:items-center justify-between gap-3 md:gap-4">
                             <div>
-                                <h2 className="text-2xl font-bold text-gray-900">{activeLevel.titleAr}</h2>
-                                <p className="text-gray-500 mt-1">{activeLevel.lessons.length} دروس مسجلة</p>
+                                <h2 className="text-xl md:text-2xl font-bold text-gray-900">{activeLevel.titleAr}</h2>
+                                <p className="text-gray-500 mt-1 text-sm md:text-base">{activeLevel.lessons.length} دروس مسجلة</p>
                             </div>
                             <button
                                 onClick={() => setShowAddForm(!showAddForm)}
-                                className={`px-8 py-4 rounded-2xl font-bold text-lg transition-all flex items-center gap-3 ${showAddForm
+                                className={`px-4 md:px-8 py-2 md:py-4 rounded-2xl font-bold text-sm md:text-lg transition-all flex items-center gap-2 md:gap-3 whitespace-nowrap ${showAddForm
                                     ? 'bg-gray-200 text-gray-700'
                                     : 'science-gradient text-white shadow-lg shadow-sky-500/20 hover:shadow-xl'
                                     }`}
                             >
                                 {showAddForm ? (
-                                    <><span className="text-2xl">✕</span> إلغاء</>
+                                    <><span className="text-xl md:text-2xl">✕</span> <span className="hidden sm:inline">إلغاء</span></>
                                 ) : (
-                                    <><span className="text-2xl">+</span> إضافة درس جديد</>
+                                    <><span className="text-xl md:text-2xl">+</span> <span className="hidden sm:inline">إضافة درس جديد</span><span className="sm:hidden">جديد</span></>
                                 )}
                             </button>
                         </div>
