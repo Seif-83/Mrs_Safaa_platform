@@ -8,6 +8,12 @@ export interface Lesson {
   pdfUrl: string;
   description: string;
   code?: string;
+  // Single-use access codes for this lesson
+  codes?: {
+    value: string;
+    used?: boolean;
+    assignedTo?: string | null;
+  }[];
 }
 
 export interface PrepData {

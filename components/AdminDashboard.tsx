@@ -26,7 +26,7 @@ function convertToEmbedUrl(url: string): string {
 
 const AdminDashboard: React.FC = () => {
     const navigate = useNavigate();
-    const { levels, addLesson, removeLesson, resetToDefaults } = useContentStore();
+    const { levels, addLesson, removeLesson, updateLesson, resetToDefaults } = useContentStore();
     const [activeTab, setActiveTab] = useState<PrepLevel>('1st-prep');
     const [showAddForm, setShowAddForm] = useState(false);
     const [deleteConfirm, setDeleteConfirm] = useState<{ levelId: string; lessonId: string } | null>(null);
@@ -39,6 +39,11 @@ const AdminDashboard: React.FC = () => {
     const [newPdfUrl, setNewPdfUrl] = useState('');
     const [newDescription, setNewDescription] = useState('');
     const [newCode, setNewCode] = useState('');
+    // Codes generation state
+    const [codesModalOpen, setCodesModalOpen] = useState(false);
+    const [selectedLessonId, setSelectedLessonId] = useState<string | null>(null);
+    const [generateCount, setGenerateCount] = useState<number>(5);
+    const [generatedCodesPreview, setGeneratedCodesPreview] = useState<string[]>([]);
 
     // Auth guard
     useEffect(() => {
@@ -95,6 +100,55 @@ const AdminDashboard: React.FC = () => {
     const showSuccess = (msg: string) => {
         setSuccessMsg(msg);
         setTimeout(() => setSuccessMsg(''), 3000);
+    };
+
+    // Helpers for codes
+    const randomCode = (len = 8) => {
+        const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789';
+        let out = '';
+        for (let i = 0; i < len; i++) out += chars.charAt(Math.floor(Math.random() * chars.length));
+        return out;
+    };
+
+    const generateUniqueCodes = (count: number, existing: string[] = []) => {
+        const set = new Set(existing);
+        const out: string[] = [];
+        while (out.length < count) {
+            const c = randomCode(8);
+            if (!set.has(c) && !out.includes(c)) out.push(c);
+        }
+        return out;
+    };
+
+    const openCodesForLesson = (lessonId: string) => {
+        setSelectedLessonId(lessonId);
+        setGeneratedCodesPreview([]);
+        setGenerateCount(5);
+        setCodesModalOpen(true);
+    };
+
+    const handleGenerate = () => {
+        if (!selectedLessonId) return;
+        const lesson = activeLevel?.lessons.find(l => l.id === selectedLessonId);
+        const existing = lesson?.codes?.map(c => c.value) ?? [];
+        const newCodes = generateUniqueCodes(generateCount, existing);
+
+        const merged = [
+            ...(lesson?.codes ?? []),
+            ...newCodes.map(v => ({ value: v, used: false }))
+        ];
+
+        // Update in DB
+        updateLesson(activeTab, selectedLessonId, { codes: merged });
+        setGeneratedCodesPreview(newCodes);
+        showSuccess('تم توليد الأكواد بنجاح ✓');
+    };
+
+    const toggleCodeUsed = (lessonId: string, codeValue: string) => {
+        const lesson = activeLevel?.lessons.find(l => l.id === lessonId);
+        if (!lesson) return;
+        const updatedCodes = (lesson.codes ?? []).map(c => c.value === codeValue ? { ...c, used: !c.used } : c);
+        updateLesson(activeTab, lessonId, { codes: updatedCodes });
     };
 
     const tabs: { id: PrepLevel; label: string }[] = [
@@ -285,18 +339,32 @@ const AdminDashboard: React.FC = () => {
                                                                 🔒 كود: {lesson.code}
                                                             </span>
                                                         )}
+                                                        {/* Single-use codes badge */}
+                                                        {lesson.codes && lesson.codes.length > 0 && (
+                                                            <span className="bg-violet-50 text-violet-600 px-3 py-1 rounded-full font-medium flex items-center gap-1">
+                                                                🎟️ غير مستعملة: {(lesson.codes.filter(c=>!c.used)).length}
+                                                            </span>
+                                                        )}
                                                     </div>
                                                 </div>
                                             </div>
-                                            <button
-                                                onClick={() => setDeleteConfirm({ levelId: activeTab, lessonId: lesson.id })}
-                                                className="px-5 py-3 bg-red-50 text-red-600 rounded-xl font-bold hover:bg-red-100 transition-all flex items-center gap-2 opacity-70 group-hover:opacity-100"
-                                            >
+                                            <div className="flex items-center gap-2">
+                                                <button
+                                                    onClick={() => openCodesForLesson(lesson.id)}
+                                                    className="px-4 py-2 bg-violet-50 text-violet-600 rounded-xl font-bold hover:bg-violet-100 transition-all flex items-center gap-2 opacity-80"
+                                                >
+                                                    🎟️ أكواد
+                                                </button>
+                                                <button
+                                                    onClick={() => setDeleteConfirm({ levelId: activeTab, lessonId: lesson.id })}
+                                                    className="px-5 py-3 bg-red-50 text-red-600 rounded-xl font-bold hover:bg-red-100 transition-all flex items-center gap-2 opacity-70 group-hover:opacity-100"
+                                                >
                                                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                                                 </svg>
                                                 حذف
-                                            </button>
+                                                </button>
+                                            </div>
                                         </div>
                                     ))}
                                 </div>
@@ -330,6 +398,67 @@ const AdminDashboard: React.FC = () => {
                             >
                                 حذف الدرس
                             </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Codes Modal */}
+            {codesModalOpen && selectedLessonId && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm px-4 animate-fade-in">
+                    <div className="bg-white rounded-3xl p-8 max-w-2xl w-full text-right shadow-2xl">
+                        <div className="flex items-start justify-between mb-4">
+                            <div>
+                                <h3 className="text-2xl font-bold">🎟️ إدارة أكواد الدرس</h3>
+                                <p className="text-gray-500">حوّل رابط الفيديو إلى أكواد وصول مرة واحدة لكل طالب</p>
+                            </div>
+                            <button onClick={() => setCodesModalOpen(false)} className="text-gray-400">✕</button>
+                        </div>
+
+                        <div className="space-y-4">
+                            <div>
+                                <label className="block text-gray-700 font-bold mb-2">عدد الأكواد</label>
+                                <input
+                                    type="number"
+                                    value={generateCount}
+                                    onChange={e => setGenerateCount(Math.max(1, Number(e.target.value) || 1))}
+                                    className="w-40 p-3 bg-white border border-gray-200 rounded-xl outline-none"
+                                />
+                                <button onClick={handleGenerate} className="mx-4 px-5 py-3 bg-violet-600 text-white rounded-xl font-bold">توليد</button>
+                            </div>
+
+                            {/* Preview generated */}
+                            {generatedCodesPreview.length > 0 && (
+                                <div className="bg-gray-50 p-4 rounded-xl">
+                                    <p className="font-bold mb-2">الأكواد المولدة حديثاً</p>
+                                    <div className="flex flex-wrap gap-2">
+                                        {generatedCodesPreview.map(c => (
+                                            <div key={c} className="px-3 py-2 bg-white border rounded-lg text-sm flex items-center gap-2">
+                                                <span className="font-mono">{c}</span>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Existing codes list */}
+                            <div className="bg-white border rounded-xl p-4">
+                                <p className="font-bold mb-2">جميع الأكواد لهذا الدرس</p>
+                                <div className="space-y-2 max-h-48 overflow-auto">
+                                    {(activeLevel?.lessons.find(l=>l.id===selectedLessonId)?.codes ?? []).map(c => (
+                                        <div key={c.value} className="flex items-center justify-between gap-4">
+                                            <div className="flex items-center gap-3">
+                                                <span className="font-mono">{c.value}</span>
+                                                <span className={`px-2 py-1 rounded-full text-xs ${c.used ? 'bg-gray-200 text-gray-600' : 'bg-green-50 text-green-700'}`}>{c.used ? 'مستخدم' : 'غير مستخدم'}</span>
+                                            </div>
+                                            <div className="flex items-center gap-2">
+                                                <button onClick={() => navigator.clipboard?.writeText(c.value)} className="px-3 py-1 bg-sky-50 text-sky-600 rounded-md">نسخ</button>
+                                                <button onClick={() => toggleCodeUsed(selectedLessonId, c.value)} className="px-3 py-1 bg-amber-50 text-amber-600 rounded-md">تبديل حالة</button>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>

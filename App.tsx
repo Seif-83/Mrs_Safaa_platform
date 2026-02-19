@@ -132,23 +132,59 @@ const HomePage: React.FC = () => {
   );
 };
 
-const VideoLessonCard: React.FC<{ lesson: Lesson }> = ({ lesson }) => {
-  const [isLocked, setIsLocked] = useState(!!lesson.code);
+const VideoLessonCard: React.FC<{ lesson: Lesson; levelId: string }> = ({ lesson, levelId }) => {
+  const { updateLesson } = useContentStore();
+  const [isLocked, setIsLocked] = useState<boolean>(() => {
+    // If lesson has single-use codes, it's locked unless unlocked in session
+    if (lesson.codes && lesson.codes.length > 0) return !(sessionStorage.getItem(`video_unlocked_${lesson.id}`) === 'true');
+    return !!lesson.code;
+  });
   const [code, setCode] = useState('');
   const [error, setError] = useState('');
 
-  // Check if already unlocked in session
+  // Keep locked state in sync when lesson changes
   useEffect(() => {
-    if (lesson.code) {
+    if (lesson.codes && lesson.codes.length > 0) {
       const unlocked = sessionStorage.getItem(`video_unlocked_${lesson.id}`);
-      if (unlocked === 'true') {
-        setIsLocked(false);
-      }
+      setIsLocked(!(unlocked === 'true'));
+    } else {
+      setIsLocked(!!lesson.code);
     }
-  }, [lesson.id, lesson.code]);
+  }, [lesson.id, lesson.code, lesson.codes]);
 
-  const handleUnlock = (e: React.FormEvent) => {
+  const handleUnlock = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    // If single-use codes are configured for this lesson
+    if (lesson.codes && lesson.codes.length > 0) {
+      const entered = code.trim();
+      const found = lesson.codes.find(c => c.value === entered);
+      if (!found) {
+        setError('الكود غير صحيح');
+        return;
+      }
+      if (found.used) {
+        setError('هذا الكود مستخدم بالفعل');
+        return;
+      }
+
+      // Mark code as used and assign to student (if available)
+      const studentPhone = sessionStorage.getItem('student_phone') || sessionStorage.getItem('student_name') || null;
+      const updatedCodes = (lesson.codes || []).map(c => c.value === entered ? { ...c, used: true, assignedTo: studentPhone } : c);
+
+      try {
+        await updateLesson(levelId, lesson.id, { codes: updatedCodes });
+        setIsLocked(false);
+        sessionStorage.setItem(`video_unlocked_${lesson.id}`, 'true');
+        setError('');
+      } catch (err) {
+        console.error('Failed to mark code used', err);
+        setError('حدث خطأ، يرجى المحاولة لاحقاً');
+      }
+      return;
+    }
+
+    // Legacy single static code
     if (code.trim() === lesson.code) {
       setIsLocked(false);
       sessionStorage.setItem(`video_unlocked_${lesson.id}`, 'true');
@@ -167,22 +203,29 @@ const VideoLessonCard: React.FC<{ lesson: Lesson }> = ({ lesson }) => {
               <span className="text-2xl">🔒</span>
             </div>
             <h4 className="text-white font-bold mb-2">هذا الفيديو محمي بكود</h4>
-            <form onSubmit={handleUnlock} className="w-full max-w-xs space-y-2">
-              <input
-                type="text"
-                value={code}
-                onChange={e => setCode(e.target.value)}
-                placeholder="أدخل كود الفيديو"
-                className="w-full px-4 py-2 rounded-lg bg-gray-800 border border-gray-700 text-white text-center focus:ring-2 focus:ring-sky-500 outline-none"
-              />
-              {error && <p className="text-red-500 text-sm font-bold">{error}</p>}
-              <button
-                type="submit"
-                className="w-full py-2 bg-sky-600 hover:bg-sky-700 text-white rounded-lg font-bold transition-colors"
-              >
-                مشاهدة
-              </button>
-            </form>
+            {lesson.codes && lesson.codes.length > 0 && lesson.codes.every(c => c.used) ? (
+              <div className="text-sm text-gray-300 max-w-xs">
+                <p className="mb-2">عذراً، لا توجد أكواد متاحة لهذا الدرس حالياً.</p>
+                <p>يرجى التواصل مع المعلم للحصول على أكواد جديدة.</p>
+              </div>
+            ) : (
+              <form onSubmit={handleUnlock} className="w-full max-w-xs space-y-2">
+                <input
+                  type="text"
+                  value={code}
+                  onChange={e => setCode(e.target.value)}
+                  placeholder="أدخل كود الفيديو"
+                  className="w-full px-4 py-2 rounded-lg bg-gray-800 border border-gray-700 text-white text-center focus:ring-2 focus:ring-sky-500 outline-none"
+                />
+                {error && <p className="text-red-500 text-sm font-bold">{error}</p>}
+                <button
+                  type="submit"
+                  className="w-full py-2 bg-sky-600 hover:bg-sky-700 text-white rounded-lg font-bold transition-colors"
+                >
+                  مشاهدة
+                </button>
+              </form>
+            )}
           </div>
         ) : (
           <iframe
@@ -222,8 +265,8 @@ const ContentPage: React.FC<{ type: 'videos' | 'notes' }> = ({ type }) => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
           {level.lessons.map(lesson => (
             <React.Fragment key={lesson.id}>
-              {type === 'videos' ? (
-                <VideoLessonCard lesson={lesson} />
+                {type === 'videos' ? (
+                <VideoLessonCard lesson={lesson} levelId={level.id} />
               ) : (
                 <div className="bg-glass rounded-[2rem] shadow-xl overflow-hidden border border-white/50 flex flex-col hover:shadow-2xl transition-all group">
                   <div className="h-48 bg-teal-50 flex items-center justify-center text-teal-600">
