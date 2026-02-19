@@ -32,6 +32,7 @@ const AdminDashboard: React.FC = () => {
     const [deleteConfirm, setDeleteConfirm] = useState<{ levelId: string; lessonId: string } | null>(null);
     const [showResetConfirm, setShowResetConfirm] = useState(false);
     const [successMsg, setSuccessMsg] = useState('');
+    const [editingLesson, setEditingLesson] = useState<{ levelId: string; lessonId: string } | null>(null);
 
     // Form state
     const [newTitle, setNewTitle] = useState('');
@@ -84,6 +85,39 @@ const AdminDashboard: React.FC = () => {
             setDeleteConfirm(null);
             showSuccess('تم حذف الدرس بنجاح ✓');
         }
+    };
+
+    const openEditLesson = (levelId: string, lessonId: string) => {
+        const lesson = levels.find(l => l.id === levelId)?.lessons.find(ls => ls.id === lessonId);
+        if (lesson) {
+            setNewTitle(lesson.title);
+            setNewVideoUrl(lesson.videoUrl || '');
+            setNewPdfUrl(lesson.pdfUrl || '');
+            setNewDescription(lesson.description || '');
+            setNewCode(lesson.code || '');
+            setEditingLesson({ levelId, lessonId });
+        }
+    };
+
+    const handleEditLesson = (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!editingLesson || !newTitle.trim()) return;
+
+        updateLesson(editingLesson.levelId, editingLesson.lessonId, {
+            title: newTitle.trim(),
+            videoUrl: convertToEmbedUrl(newVideoUrl),
+            pdfUrl: newPdfUrl.trim(),
+            description: newDescription.trim(),
+            code: newCode.trim(),
+        });
+
+        setEditingLesson(null);
+        setNewTitle('');
+        setNewVideoUrl('');
+        setNewPdfUrl('');
+        setNewDescription('');
+        setNewCode('');
+        showSuccess('تم تحديث الدرس بنجاح ✓');
     };
 
     const handleReset = () => {
@@ -352,6 +386,12 @@ const AdminDashboard: React.FC = () => {
                                             </div>
                                             <div className="flex items-center gap-2">
                                                 <button
+                                                    onClick={() => openEditLesson(activeTab, lesson.id)}
+                                                    className="px-4 py-2 bg-blue-50 text-blue-600 rounded-xl font-bold hover:bg-blue-100 transition-all flex items-center gap-2"
+                                                >
+                                                    ✏️ تعديل
+                                                </button>
+                                                <button
                                                     onClick={() => openCodesForLesson(lesson.id)}
                                                     className="px-4 py-2 bg-violet-50 text-violet-600 rounded-xl font-bold hover:bg-violet-100 transition-all flex items-center gap-2 opacity-80"
                                                 >
@@ -401,6 +441,61 @@ const AdminDashboard: React.FC = () => {
                                 حذف الدرس
                             </button>
                         </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Edit Lesson Modal */}
+            {editingLesson && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm px-4 overflow-auto">
+                    <div className="bg-white rounded-3xl p-8 max-w-2xl w-full shadow-2xl my-8">
+                        <div className="flex items-center justify-between mb-6">
+                            <h3 className="text-3xl font-bold text-gray-900">تعديل الدرس</h3>
+                            <button
+                                onClick={() => {
+                                    setEditingLesson(null);
+                                    setNewTitle('');
+                                    setNewVideoUrl('');
+                                    setNewPdfUrl('');
+                                    setNewDescription('');
+                                    setNewCode('');
+                                }}
+                                className="text-gray-400 hover:text-gray-600"
+                            >
+                                ✕
+                            </button>
+                        </div>
+
+                        <form onSubmit={handleEditLesson} className="space-y-4">
+                            <input className="w-full p-3 border border-gray-200 rounded-xl" placeholder="عنوان الدرس" value={newTitle} onChange={e=>setNewTitle(e.target.value)} required />
+                            <textarea className="w-full p-3 border border-gray-200 rounded-xl resize-none" rows={3} placeholder="وصف الدرس" value={newDescription} onChange={e=>setNewDescription(e.target.value)} />
+                            <input className="w-full p-3 border border-gray-200 rounded-xl" placeholder="رابط الفيديو (YouTube)" value={newVideoUrl} onChange={e=>setNewVideoUrl(e.target.value)} />
+                            <input className="w-full p-3 border border-gray-200 rounded-xl" placeholder="رابط المذكرة (PDF)" value={newPdfUrl} onChange={e=>setNewPdfUrl(e.target.value)} />
+                            <input className="w-full p-3 border border-gray-200 rounded-xl" placeholder="كود الوصول (اختياري)" value={newCode} onChange={e=>setNewCode(e.target.value)} />
+
+                            <div className="flex gap-3 pt-4">
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        setEditingLesson(null);
+                                        setNewTitle('');
+                                        setNewVideoUrl('');
+                                        setNewPdfUrl('');
+                                        setNewDescription('');
+                                        setNewCode('');
+                                    }}
+                                    className="flex-1 py-3 bg-gray-100 text-gray-700 rounded-2xl font-bold hover:bg-gray-200"
+                                >
+                                    إلغاء
+                                </button>
+                                <button
+                                    type="submit"
+                                    className="flex-1 py-3 science-gradient text-white rounded-2xl font-bold hover:shadow-lg"
+                                >
+                                    ✓ حفظ التعديلات
+                                </button>
+                            </div>
+                        </form>
                     </div>
                 </div>
             )}
