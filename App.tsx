@@ -239,8 +239,17 @@ const VideoLessonCard: React.FC<{ lesson: Lesson; levelId: string }> = ({ lesson
   return (
     <div className="bg-glass rounded-[2rem] shadow-xl overflow-hidden border border-white/50 flex flex-col hover:shadow-2xl transition-all group">
       <div className="aspect-video bg-black relative">
+        {/* cover image if present */}
+        {lesson.coverImage ? (
+          <img src={lesson.coverImage} alt={`cover-${lesson.id}`} className="absolute inset-0 w-full h-full object-cover" />
+        ) : null}
+        {lesson.videoUrl && (lesson.videoUrl.startsWith('data:') || lesson.videoUrl.endsWith('.mp4')) ? (
+          <div className="absolute top-2 right-2">
+            <span className="bg-white/40 text-xs px-2 py-1 rounded">محمّل</span>
+          </div>
+        ) : null}
         {isLocked ? (
-          <div className="absolute inset-0 bg-gray-900 flex flex-col items-center justify-center p-6 text-center">
+          <div className="absolute inset-0 bg-gray-900/60 flex flex-col items-center justify-center p-6 text-center">
             <div className="w-12 h-12 bg-gray-800 rounded-full flex items-center justify-center mb-3">
               <span className="text-2xl">🔒</span>
             </div>
@@ -270,12 +279,17 @@ const VideoLessonCard: React.FC<{ lesson: Lesson; levelId: string }> = ({ lesson
             )}
           </div>
         ) : (
-          <iframe
-            className="w-full h-full"
-            src={lesson.videoUrl}
-            title={lesson.title}
-            allowFullScreen
-          ></iframe>
+          // when unlocked show video element for uploaded files, otherwise iframe
+          (lesson.videoUrl && (lesson.videoUrl.startsWith('data:') || lesson.videoUrl.endsWith('.mp4'))) ? (
+            <video className="w-full h-full relative" src={lesson.videoUrl} controls />
+          ) : (
+            <iframe
+              className="w-full h-full relative"
+              src={lesson.videoUrl}
+              title={lesson.title}
+              allowFullScreen
+            ></iframe>
+          )
         )}
       </div>
       <div className="p-8">

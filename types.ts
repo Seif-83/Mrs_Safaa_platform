@@ -8,6 +8,7 @@ export interface Lesson {
   pdfUrl: string;
   description: string;
   code?: string;
+  coverImage?: string; // base64 data URL or image URL for lesson cover
   // Single-use access codes for this lesson
   codes?: {
     value: string;

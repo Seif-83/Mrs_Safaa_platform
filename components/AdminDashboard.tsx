@@ -41,6 +41,9 @@ const AdminDashboard: React.FC = () => {
     const [newDescription, setNewDescription] = useState('');
     const [newCode, setNewCode] = useState('');
     const [newIsPublic, setNewIsPublic] = useState(true);
+    const [newCover, setNewCover] = useState<string | null>(null);
+    const [newVideoSource, setNewVideoSource] = useState<'link'|'upload'>('link');
+    const [newPdfSource, setNewPdfSource] = useState<'link'|'upload'>('link');
     // Codes generation state
     const [codesModalOpen, setCodesModalOpen] = useState(false);
     const [selectedLessonId, setSelectedLessonId] = useState<string | null>(null);
@@ -68,7 +71,8 @@ const AdminDashboard: React.FC = () => {
             pdfUrl: newPdfUrl.trim(),
             description: newDescription.trim(),
             code: newIsPublic ? '' : newCode.trim(),
-            codes: newIsPublic ? [] : (newCode.trim() ? [{ value: newCode.trim(), used: false }] : [])
+            codes: newIsPublic ? [] : (newCode.trim() ? [{ value: newCode.trim(), used: false }] : []),
+            coverImage: newCover || undefined
         });
 
         // Reset form
@@ -78,6 +82,7 @@ const AdminDashboard: React.FC = () => {
         setNewDescription('');
         setNewCode('');
         setNewIsPublic(true);
+        setNewCover(null);
         setShowAddForm(false);
         showSuccess('تم إضافة الدرس بنجاح ✓');
     };
@@ -98,6 +103,7 @@ const AdminDashboard: React.FC = () => {
             setNewPdfUrl(lesson.pdfUrl || '');
             setNewDescription(lesson.description || '');
             setNewCode(lesson.code || '');
+            setNewCover(lesson.coverImage || null);
             setEditingLesson({ levelId, lessonId });
         }
     };
@@ -112,6 +118,7 @@ const AdminDashboard: React.FC = () => {
             pdfUrl: newPdfUrl.trim(),
             description: newDescription.trim(),
             code: newCode.trim(),
+            coverImage: newCover || undefined,
         });
 
         setEditingLesson(null);
@@ -120,6 +127,7 @@ const AdminDashboard: React.FC = () => {
         setNewPdfUrl('');
         setNewDescription('');
         setNewCode('');
+        setNewCover(null);
         showSuccess('تم تحديث الدرس بنجاح ✓');
     };
 
@@ -299,28 +307,58 @@ const AdminDashboard: React.FC = () => {
                                         />
                                     </div>
                                     <div>
-                                        <label className="block text-gray-700 font-bold mb-2">رابط الفيديو (YouTube)</label>
-                                        <input
-                                            type="text"
-                                            value={newVideoUrl}
-                                            onChange={e => setNewVideoUrl(e.target.value)}
-                                            placeholder="الصق رابط اليوتيوب هنا"
-                                            className="w-full p-4 bg-white border border-gray-200 rounded-xl focus:ring-4 focus:ring-sky-500/20 focus:border-sky-500 outline-none transition-all text-left"
-                                            dir="ltr"
-                                        />
-                                        <p className="text-xs text-gray-400 mt-1 text-left" dir="ltr">يقبل أي صيغة: youtube.com/watch?v=... أو youtu.be/... أو youtube.com/embed/...</p>
+                                        <label className="block text-gray-700 font-bold mb-2">رابط الفيديو (YouTube) أو رفع من الجهاز</label>
+                                        <div className="flex items-center gap-3 mb-2">
+                                            <label className="flex items-center gap-2"><input type="radio" name="videoSrc" checked={newVideoSource==='link'} onChange={()=>setNewVideoSource('link')} /> رابط</label>
+                                            <label className="flex items-center gap-2"><input type="radio" name="videoSrc" checked={newVideoSource==='upload'} onChange={()=>setNewVideoSource('upload')} /> رفع من الجهاز</label>
+                                        </div>
+                                        {newVideoSource === 'link' ? (
+                                            <>
+                                            <input
+                                                type="text"
+                                                value={newVideoUrl}
+                                                onChange={e => setNewVideoUrl(e.target.value)}
+                                                placeholder="الصق رابط اليوتيوب هنا أو رابط ملف MP4"
+                                                className="w-full p-4 bg-white border border-gray-200 rounded-xl focus:ring-4 focus:ring-sky-500/20 focus:border-sky-500 outline-none transition-all text-left"
+                                                dir="ltr"
+                                            />
+                                            <p className="text-xs text-gray-400 mt-1 text-left" dir="ltr">يقبل روابط يوتيوب أو رابط مباشر لملف MP4</p>
+                                            </>
+                                        ) : (
+                                            <input type="file" accept="video/*" onChange={e=>{
+                                                const file = e.target.files?.[0];
+                                                if (!file) return;
+                                                const reader = new FileReader();
+                                                reader.onload = ev => setNewVideoUrl(ev.target?.result as string);
+                                                reader.readAsDataURL(file);
+                                            }} />
+                                        )}
                                     </div>
                                     
                                     <div>
-                                        <label className="block text-gray-700 font-bold mb-2">رابط المذكرة (PDF)</label>
-                                        <input
-                                            type="text"
-                                            value={newPdfUrl}
-                                            onChange={e => setNewPdfUrl(e.target.value)}
-                                            placeholder="https://example.com/file.pdf أو /filename.pdf"
-                                            className="w-full p-4 bg-white border border-gray-200 rounded-xl focus:ring-4 focus:ring-sky-500/20 focus:border-sky-500 outline-none transition-all text-left"
-                                            dir="ltr"
-                                        />
+                                        <label className="block text-gray-700 font-bold mb-2">رابط المذكرة (PDF) أو رفع من الجهاز</label>
+                                        <div className="flex items-center gap-3 mb-2">
+                                            <label className="flex items-center gap-2"><input type="radio" name="pdfSrc" checked={newPdfSource==='link'} onChange={()=>setNewPdfSource('link')} /> رابط</label>
+                                            <label className="flex items-center gap-2"><input type="radio" name="pdfSrc" checked={newPdfSource==='upload'} onChange={()=>setNewPdfSource('upload')} /> رفع من الجهاز</label>
+                                        </div>
+                                        {newPdfSource === 'link' ? (
+                                            <input
+                                                type="text"
+                                                value={newPdfUrl}
+                                                onChange={e => setNewPdfUrl(e.target.value)}
+                                                placeholder="https://example.com/file.pdf أو /filename.pdf"
+                                                className="w-full p-4 bg-white border border-gray-200 rounded-xl focus:ring-4 focus:ring-sky-500/20 focus:border-sky-500 outline-none transition-all text-left"
+                                                dir="ltr"
+                                            />
+                                        ) : (
+                                            <input type="file" accept="application/pdf" onChange={e=>{
+                                                const file = e.target.files?.[0];
+                                                if (!file) return;
+                                                const reader = new FileReader();
+                                                reader.onload = ev => setNewPdfUrl(ev.target?.result as string);
+                                                reader.readAsDataURL(file);
+                                            }} />
+                                        )}
                                     </div>
                                     <div>
                                         <label className="block text-gray-700 font-bold mb-2">وصف الدرس</label>
@@ -335,6 +373,21 @@ const AdminDashboard: React.FC = () => {
                                     <div className="flex items-center gap-3">
                                         <input id="newIsPublic" type="checkbox" checked={newIsPublic} onChange={e=>setNewIsPublic(e.target.checked)} className="w-4 h-4" />
                                         <label htmlFor="newIsPublic" className="text-gray-700">اجعل الدرس عاماً (لا يتطلب كود)</label>
+                                    </div>
+                                    <div>
+                                        <label className="block text-gray-700 font-bold mb-2">صورة الغلاف (اختياري)</label>
+                                        <input type="file" accept="image/*" onChange={e=>{
+                                            const file = e.target.files?.[0];
+                                            if (!file) return;
+                                            const reader = new FileReader();
+                                            reader.onload = ev => setNewCover(ev.target?.result as string);
+                                            reader.readAsDataURL(file);
+                                        }} />
+                                        {newCover && (
+                                            <div className="mt-2 p-2 bg-gray-50 rounded flex items-center justify-center">
+                                                <img src={newCover} alt="cover preview" className="max-w-xs max-h-32 rounded" />
+                                            </div>
+                                        )}
                                     </div>
                                     <button
                                         type="submit"
@@ -368,8 +421,15 @@ const AdminDashboard: React.FC = () => {
                                                     {index + 1}
                                                 </div>
                                                 <div className="flex-1 min-w-0">
-                                                    <h4 className="text-lg font-bold text-gray-900">{lesson.title}</h4>
-                                                    <p className="text-gray-500 text-sm mt-1 line-clamp-1">{lesson.description}</p>
+                                                    <div className="flex items-center gap-3">
+                                                        {lesson.coverImage && (
+                                                            <img src={lesson.coverImage} alt="cover" className="w-20 h-12 object-cover rounded-md flex-shrink-0" />
+                                                        )}
+                                                        <div className="min-w-0">
+                                                            <h4 className="text-lg font-bold text-gray-900">{lesson.title}</h4>
+                                                            <p className="text-gray-500 text-sm mt-1 line-clamp-1">{lesson.description}</p>
+                                                        </div>
+                                                    </div>
                                                     <div className="flex gap-4 mt-2 text-xs">
                                                         {lesson.videoUrl && (
                                                             <span className="bg-red-50 text-red-600 px-3 py-1 rounded-full font-medium">🎥 فيديو</span>
@@ -466,6 +526,7 @@ const AdminDashboard: React.FC = () => {
                                     setNewPdfUrl('');
                                     setNewDescription('');
                                     setNewCode('');
+                                    setNewCover(null);
                                 }}
                                 className="text-gray-400 hover:text-gray-600"
                             >
@@ -480,6 +541,22 @@ const AdminDashboard: React.FC = () => {
                             <input className="w-full p-3 border border-gray-200 rounded-xl" placeholder="رابط المذكرة (PDF)" value={newPdfUrl} onChange={e=>setNewPdfUrl(e.target.value)} />
                             <input className="w-full p-3 border border-gray-200 rounded-xl" placeholder="كود الوصول (اختياري)" value={newCode} onChange={e=>setNewCode(e.target.value)} />
 
+                            <div>
+                                <label className="block text-gray-700 font-bold mb-2">صورة الغلاف (اختياري)</label>
+                                <input type="file" accept="image/*" onChange={e=>{
+                                    const file = e.target.files?.[0];
+                                    if (!file) return;
+                                    const reader = new FileReader();
+                                    reader.onload = ev => setNewCover(ev.target?.result as string);
+                                    reader.readAsDataURL(file);
+                                }} />
+                                {newCover && (
+                                    <div className="mt-2 p-2 bg-gray-50 rounded flex items-center justify-center">
+                                        <img src={newCover} alt="cover preview" className="max-w-xs max-h-32 rounded" />
+                                    </div>
+                                )}
+                            </div>
+
                             <div className="flex gap-3 pt-4">
                                 <button
                                     type="button"
@@ -490,6 +567,7 @@ const AdminDashboard: React.FC = () => {
                                         setNewPdfUrl('');
                                         setNewDescription('');
                                         setNewCode('');
+                                        setNewCover(null);
                                     }}
                                     className="flex-1 py-3 bg-gray-100 text-gray-700 rounded-2xl font-bold hover:bg-gray-200"
                                 >
