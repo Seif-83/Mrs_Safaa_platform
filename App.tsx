@@ -185,6 +185,7 @@ const VideoLessonCard: React.FC<{ lesson: Lesson; levelId: string }> = ({ lesson
   const [error, setError] = useState('');
   const [isScreenRecording, setIsScreenRecording] = useState(false);
   const videoRefsMap = React.useRef<{ [key: string]: HTMLVideoElement | null }>({});
+  const canvasOverlayRef = React.useRef<HTMLCanvasElement>(null);
 
   // Keep locked state in sync when lesson changes
   useEffect(() => {
@@ -195,6 +196,64 @@ const VideoLessonCard: React.FC<{ lesson: Lesson; levelId: string }> = ({ lesson
       setIsLocked(!!lesson.code);
     }
   }, [lesson.id, lesson.code, lesson.codes]);
+
+  // Animated canvas watermark to prevent screen recording
+  useEffect(() => {
+    let animationId: number;
+    const canvas = canvasOverlayRef.current;
+    if (!canvas) return;
+
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    const animate = () => {
+      // Set canvas size to match video
+      const rect = canvas.parentElement?.getBoundingClientRect();
+      if (rect) {
+        canvas.width = rect.width;
+        canvas.height = rect.height;
+      }
+
+      // Clear canvas
+      ctx.fillStyle = 'rgba(0, 0, 0, 0)';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      // Add dynamic watermark that changes constantly to prevent recording
+      const time = Date.now() / 1000;
+      const opacity = 0.3 + Math.sin(time * 2) * 0.1;
+      
+      // Draw multiple watermarks at different angles
+      ctx.save();
+      ctx.globalAlpha = opacity;
+      ctx.fillStyle = '#FF4444';
+      ctx.font = 'bold 40px Arial';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+
+      // Rotating watermark
+      ctx.translate(canvas.width / 2, canvas.height / 2);
+      ctx.rotate(Math.sin(time) * 0.2);
+      ctx.fillText('🚫', 0, 0);
+      ctx.restore();
+
+      // Draw edge detection pattern
+      ctx.fillStyle = `rgba(255, 68, 68, ${0.1 + Math.sin(time * 3) * 0.05})`;
+      ctx.fillRect(0, 0, canvas.width, 2);
+      ctx.fillRect(0, canvas.height - 2, canvas.width, 2);
+      ctx.fillRect(0, 0, 2, canvas.height);
+      ctx.fillRect(canvas.width - 2, 0, 2, canvas.height);
+
+      animationId = requestAnimationFrame(animate);
+    };
+
+    animate();
+
+    return () => {
+      if (animationId) {
+        cancelAnimationFrame(animationId);
+      }
+    };
+  }, []);
 
   // Detect screen recording attempts using multiple methods
   useEffect(() => {
@@ -241,16 +300,29 @@ const VideoLessonCard: React.FC<{ lesson: Lesson; levelId: string }> = ({ lesson
       }
     };
 
-    // Method 5: Periodic canvas check
+    // Method 5: Detect native screen recording by monitoring for activity
+    let lastActivityTime = Date.now();
+    const handleActivity = () => {
+      lastActivityTime = Date.now();
+    };
+
+    recordingCheckInterval = setInterval(() => {
+      // If no user activity for more than 3 seconds while page is visible, might be recording
+      const timeSinceActivity = Date.now() - lastActivityTime;
+      if (!document.hidden && timeSinceActivity > 3000) {
+        handleScreenRecordingDetected();
+      }
+    }, 2000);
+
+    // Method 6: Periodic canvas check
     canvasCheckInterval = setInterval(() => {
       try {
-        const canvas = document.createElement('canvas');
-        const ctx = canvas.getContext('2d');
-        if (ctx) {
-          ctx.fillStyle = '#fff';
-          ctx.fillRect(0, 0, 10, 10);
-          const imageData = ctx.getImageData(0, 0, 1, 1);
-          // If we can't read canvas data, might be under recording
+        const testCanvas = document.createElement('canvas');
+        const testCtx = testCanvas.getContext('2d');
+        if (testCtx) {
+          testCtx.fillStyle = '#fff';
+          testCtx.fillRect(0, 0, 10, 10);
+          const imageData = testCtx.getImageData(0, 0, 1, 1);
           if (!imageData || !imageData.data) {
             handleScreenRecordingDetected();
           }
@@ -258,20 +330,18 @@ const VideoLessonCard: React.FC<{ lesson: Lesson; levelId: string }> = ({ lesson
       } catch (err) {
         handleScreenRecordingDetected();
       }
-    }, 2000);
+    }, 3000);
 
-    // Add visibility change listener
     document.addEventListener('visibilitychange', handleVisibilityChange);
-
-    recordingCheckInterval = setInterval(() => {
-      // Check if document is hidden for extended period
-      if (document.hidden) {
-        handleScreenRecordingDetected();
-      }
-    }, 1000);
+    document.addEventListener('mousemove', handleActivity);
+    document.addEventListener('touchstart', handleActivity);
+    document.addEventListener('keypress', handleActivity);
 
     return () => {
       document.removeEventListener('visibilitychange', handleVisibilityChange);
+      document.removeEventListener('mousemove', handleActivity);
+      document.removeEventListener('touchstart', handleActivity);
+      document.removeEventListener('keypress', handleActivity);
       clearInterval(recordingCheckInterval);
       clearInterval(canvasCheckInterval);
     };
@@ -380,7 +450,7 @@ const VideoLessonCard: React.FC<{ lesson: Lesson; levelId: string }> = ({ lesson
       {/* Display all videos */}
       {!isLocked && videos.map((video, idx) => (
         <div key={video.id} className="bg-glass rounded-[2rem] shadow-xl overflow-hidden border border-white/50 flex flex-col">
-          <div className="aspect-video relative bg-black">
+          <div className="aspect-video relative bg-black overflow-hidden">
             {/* Screen recording black screen overlay - takes full priority */}
             {isScreenRecording && (
               <div className="absolute inset-0 bg-black z-50 flex items-center justify-center">
@@ -393,43 +463,63 @@ const VideoLessonCard: React.FC<{ lesson: Lesson; levelId: string }> = ({ lesson
             )}
 
             {video.videoUrl && (video.videoUrl.startsWith('data:') || video.videoUrl.endsWith('.mp4')) ? (
-              <video 
-                ref={el => { if (el) videoRefsMap.current[video.id] = el; }}
-                className="w-full h-full" 
-                src={video.videoUrl} 
-                controls
-                controlsList="nodownload"
-                style={isScreenRecording ? { opacity: 0 } : { opacity: 1 }}
-                onPlay={(e) => {
-                  if (isScreenRecording) {
-                    (e.target as HTMLVideoElement).pause();
-                  }
-                }}
-                onContextMenu={(e) => {
-                  e.preventDefault();
-                  return false;
-                }}
-                onTouchStart={(e) => {
-                  // Prevent long press context menu on mobile
-                  const longPressTimer = setTimeout(() => {
+              <>
+                <video 
+                  ref={el => { if (el) videoRefsMap.current[video.id] = el; }}
+                  className="w-full h-full" 
+                  src={video.videoUrl} 
+                  controls
+                  controlsList="nodownload"
+                  style={isScreenRecording ? { opacity: 0 } : { opacity: 1 }}
+                  onPlay={(e) => {
+                    if (isScreenRecording) {
+                      (e.target as HTMLVideoElement).pause();
+                    }
+                  }}
+                  onContextMenu={(e) => {
                     e.preventDefault();
-                  }, 500);
-                  
-                  const handleTouchEnd = () => {
-                    clearTimeout(longPressTimer);
-                    document.removeEventListener('touchend', handleTouchEnd);
-                  };
-                  document.addEventListener('touchend', handleTouchEnd);
-                }}
-              />
+                    return false;
+                  }}
+                  onTouchStart={(e) => {
+                    // Prevent long press context menu on mobile
+                    const longPressTimer = setTimeout(() => {
+                      e.preventDefault();
+                    }, 500);
+                    
+                    const handleTouchEnd = () => {
+                      clearTimeout(longPressTimer);
+                      document.removeEventListener('touchend', handleTouchEnd);
+                    };
+                    document.addEventListener('touchend', handleTouchEnd);
+                  }}
+                />
+                {/* Animated watermark canvas overlay to prevent screen recording */}
+                {idx === 0 && (
+                  <canvas 
+                    ref={canvasOverlayRef}
+                    className="absolute top-0 left-0 w-full h-full pointer-events-none"
+                    style={{ opacity: isScreenRecording ? 0 : 0.3, zIndex: 10 }}
+                  />
+                )}
+              </>
             ) : (
-              <iframe
-                className="w-full h-full"
-                src={video.videoUrl}
-                title={video.title}
-                allowFullScreen
-                style={isScreenRecording ? { opacity: 0 } : { opacity: 1 }}
-              ></iframe>
+              <>
+                <iframe
+                  className="w-full h-full"
+                  src={video.videoUrl}
+                  title={video.title}
+                  allowFullScreen
+                  style={isScreenRecording ? { opacity: 0 } : { opacity: 1 }}
+                ></iframe>
+                {/* Animated watermark for iframe embeds */}
+                {idx === 0 && (
+                  <canvas 
+                    ref={canvasOverlayRef}
+                    className="absolute top-0 left-0 w-full h-full pointer-events-none"
+                    style={{ opacity: isScreenRecording ? 0 : 0.3, zIndex: 10 }}
+                  />
+                )}
+              </>
             )}
           </div>
           <div className="p-8">
