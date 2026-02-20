@@ -40,6 +40,7 @@ const AdminDashboard: React.FC = () => {
     const [newPdfUrl, setNewPdfUrl] = useState('');
     const [newDescription, setNewDescription] = useState('');
     const [newCode, setNewCode] = useState('');
+    const [newIsPublic, setNewIsPublic] = useState(true);
     // Codes generation state
     const [codesModalOpen, setCodesModalOpen] = useState(false);
     const [selectedLessonId, setSelectedLessonId] = useState<string | null>(null);
@@ -66,7 +67,8 @@ const AdminDashboard: React.FC = () => {
             videoUrl: convertToEmbedUrl(newVideoUrl),
             pdfUrl: newPdfUrl.trim(),
             description: newDescription.trim(),
-            code: newCode.trim(),
+            code: newIsPublic ? '' : newCode.trim(),
+            codes: newIsPublic ? [] : (newCode.trim() ? [{ value: newCode.trim(), used: false }] : [])
         });
 
         // Reset form
@@ -75,6 +77,7 @@ const AdminDashboard: React.FC = () => {
         setNewPdfUrl('');
         setNewDescription('');
         setNewCode('');
+        setNewIsPublic(true);
         setShowAddForm(false);
         showSuccess('تم إضافة الدرس بنجاح ✓');
     };
@@ -329,6 +332,10 @@ const AdminDashboard: React.FC = () => {
                                             className="w-full p-4 bg-white border border-gray-200 rounded-xl focus:ring-4 focus:ring-sky-500/20 focus:border-sky-500 outline-none transition-all resize-none text-right"
                                         />
                                     </div>
+                                    <div className="flex items-center gap-3">
+                                        <input id="newIsPublic" type="checkbox" checked={newIsPublic} onChange={e=>setNewIsPublic(e.target.checked)} className="w-4 h-4" />
+                                        <label htmlFor="newIsPublic" className="text-gray-700">اجعل الدرس عاماً (لا يتطلب كود)</label>
+                                    </div>
                                     <button
                                         type="submit"
                                         className="w-full py-4 science-gradient text-white rounded-2xl font-bold text-xl hover:shadow-2xl transition-all transform active:scale-95"
@@ -542,7 +549,8 @@ const AdminDashboard: React.FC = () => {
                             <div className="bg-white border rounded-xl p-4">
                                 <div className="flex items-center justify-between">
                                     <p className="font-bold mb-2">جميع الأكواد لهذا الدرس</p>
-                                    <button
+                                    <div className="flex items-center gap-2">
+                                        <button
                                         onClick={() => {
                                             // copy all codes (value + used flag)
                                             const lesson = activeLevel?.lessons.find(l => l.id === selectedLessonId);
@@ -565,9 +573,23 @@ const AdminDashboard: React.FC = () => {
                                             }
                                         }}
                                         className="px-3 py-1 bg-sky-50 text-sky-600 rounded-md text-sm"
-                                    >
-                                        نسخ الكل
-                                    </button>
+                                        >
+                                            نسخ الكل
+                                        </button>
+
+                                        <button
+                                            onClick={() => {
+                                                if (!selectedLessonId) return;
+                                                if (!confirm('هل تريد جعل هذا الفيديو عاماً وإزالة جميع الأكواد؟')) return;
+                                                updateLesson(activeTab, selectedLessonId, { codes: [], code: '' });
+                                                setGeneratedCodesPreview([]);
+                                                showSuccess('تم جعل الفيديو عاماً وإزالة جميع الأكواد ✓');
+                                            }}
+                                            className="px-3 py-1 bg-gray-100 text-gray-700 rounded-md text-sm"
+                                        >
+                                            اجعل الفيديو عاماً
+                                        </button>
+                                    </div>
                                 </div>
                                 <div className="space-y-2 max-h-48 overflow-auto">
                                     {(activeLevel?.lessons.find(l=>l.id===selectedLessonId)?.codes ?? []).map(c => (
