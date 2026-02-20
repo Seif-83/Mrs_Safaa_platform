@@ -26,7 +26,7 @@ const PrepLevelCard: React.FC<Props> = ({ data }) => {
         
         <div className="grid grid-cols-2 gap-3">
           <Link 
-            to={`/level/${data.id}/videos`} 
+            to={`/level/${data.id}/courses`} 
             className="flex flex-col items-center justify-center p-3 rounded-2xl bg-sky-50 text-sky-700 hover:bg-sky-600 hover:text-white transition-all group/btn"
           >
             <svg className="w-6 h-6 mb-1" fill="currentColor" viewBox="0 0 20 20"><path d="M2 6a2 2 0 012-2h12a2 2 0 012 2v8a2 2 0 01-2 2H4a2 2 0 01-2-2V6zm2 0v8h12V6H4zm3 2l5 2-5 2V8z"></path></svg>

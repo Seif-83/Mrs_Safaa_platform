@@ -238,18 +238,14 @@ const VideoLessonCard: React.FC<{ lesson: Lesson; levelId: string }> = ({ lesson
 
   return (
     <div className="bg-glass rounded-[2rem] shadow-xl overflow-hidden border border-white/50 flex flex-col hover:shadow-2xl transition-all group">
-      <div className="aspect-video bg-black relative">
-        {/* cover image if present */}
-        {lesson.coverImage ? (
-          <img src={lesson.coverImage} alt={`cover-${lesson.id}`} className="absolute inset-0 w-full h-full object-cover" />
-        ) : null}
+      <div className="aspect-video relative" style={lesson.coverImage && isLocked ? { backgroundImage: `url(${lesson.coverImage})`, backgroundSize: 'cover', backgroundPosition: 'center', backgroundColor: '#000' } : { backgroundColor: '#000' }}>
         {lesson.videoUrl && (lesson.videoUrl.startsWith('data:') || lesson.videoUrl.endsWith('.mp4')) ? (
-          <div className="absolute top-2 right-2">
+          <div className="absolute top-2 right-2 z-10">
             <span className="bg-white/40 text-xs px-2 py-1 rounded">محمّل</span>
           </div>
         ) : null}
         {isLocked ? (
-          <div className="absolute inset-0 bg-gray-900/60 flex flex-col items-center justify-center p-6 text-center">
+          <div className="absolute inset-0 bg-gray-900/60 flex flex-col items-center justify-center p-6 text-center z-20">
             <div className="w-12 h-12 bg-gray-800 rounded-full flex items-center justify-center mb-3">
               <span className="text-2xl">🔒</span>
             </div>
@@ -281,10 +277,10 @@ const VideoLessonCard: React.FC<{ lesson: Lesson; levelId: string }> = ({ lesson
         ) : (
           // when unlocked show video element for uploaded files, otherwise iframe
           (lesson.videoUrl && (lesson.videoUrl.startsWith('data:') || lesson.videoUrl.endsWith('.mp4'))) ? (
-            <video className="w-full h-full relative" src={lesson.videoUrl} controls />
+            <video className="w-full h-full relative z-10" src={lesson.videoUrl} controls />
           ) : (
             <iframe
-              className="w-full h-full relative"
+              className="w-full h-full relative z-10"
               src={lesson.videoUrl}
               title={lesson.title}
               allowFullScreen
@@ -295,6 +291,55 @@ const VideoLessonCard: React.FC<{ lesson: Lesson; levelId: string }> = ({ lesson
       <div className="p-8">
         <h3 className="text-2xl font-bold text-gray-900 mb-3">{lesson.title}</h3>
         <p className="text-gray-500 leading-relaxed mb-8">{lesson.description}</p>
+      </div>
+    </div>
+  );
+};
+
+const CoursesPage: React.FC = () => {
+  const { levelId } = useParams<{ levelId: string }>();
+  const { levels } = useContentStore();
+  const level = levels.find(l => l.id === levelId);
+
+  if (!level) return <div className="p-20 text-center font-bold text-2xl">المرحلة غير موجودة.</div>;
+
+  return (
+    <div className="min-h-screen pb-32 relative z-10">
+      <div className="science-gradient pt-32 pb-48 text-white text-center px-4">
+        <h1 className="text-5xl font-extrabold mb-4">{level.titleAr}</h1>
+        <p className="text-sky-100 text-2xl">🎥 فيديوهات الشرح</p>
+        <Link to="/" className="mt-8 inline-block bg-white/10 hover:bg-white/20 px-6 py-2 rounded-full transition-all">
+          ← العودة للرئيسية
+        </Link>
+      </div>
+
+      <div className="max-w-7xl mx-auto px-4 -mt-32">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
+          {(level.lessons || []).map(lesson => (
+            <Link key={lesson.id} to={`/level/${levelId}/videos/${lesson.id}`} className="block group">
+              <div className="bg-glass rounded-[2rem] shadow-xl overflow-hidden border border-white/50 hover:shadow-2xl transition-all transform hover:scale-105">
+                <div 
+                  className="aspect-video relative bg-black"
+                  style={lesson.coverImage ? { backgroundImage: `url(${lesson.coverImage})`, backgroundSize: 'cover', backgroundPosition: 'center' } : { backgroundColor: '#000' }}
+                >
+                  {lesson.videoUrl && (lesson.videoUrl.startsWith('data:') || lesson.videoUrl.endsWith('.mp4')) ? (
+                    <div className="absolute top-2 right-2">
+                      <span className="bg-white/40 text-xs px-2 py-1 rounded">محمّل</span>
+                    </div>
+                  ) : null}
+                  <div className="absolute inset-0 bg-black/30 group-hover:bg-black/50 transition-all flex items-end p-4">
+                    <div>
+                      <h3 className="text-white text-lg font-bold">{lesson.title}</h3>
+                    </div>
+                  </div>
+                </div>
+                <div className="p-4">
+                  <p className="text-gray-600 text-sm line-clamp-2">{lesson.description}</p>
+                </div>
+              </div>
+            </Link>
+          ))}
+        </div>
       </div>
     </div>
   );
@@ -351,6 +396,30 @@ const ContentPage: React.FC<{ type: 'videos' | 'notes' }> = ({ type }) => {
   );
 };
 
+const VideoPlayerPage: React.FC = () => {
+  const { levelId, lessonId } = useParams<{ levelId: string; lessonId: string }>();
+  const { levels } = useContentStore();
+  const level = levels.find(l => l.id === levelId);
+  const lesson = level?.lessons?.find(les => les.id === lessonId);
+
+  if (!level || !lesson) return <div className="p-20 text-center font-bold text-2xl">الدرس غير موجود.</div>;
+
+  return (
+    <div className="min-h-screen pb-32 relative z-10">
+      <div className="science-gradient pt-32 pb-12 text-white text-center px-4">
+        <Link to={`/level/${levelId}/courses`} className="inline-block bg-white/10 hover:bg-white/20 px-6 py-2 rounded-full transition-all mb-4">
+          ← العودة للفيديوهات
+        </Link>
+        <h1 className="text-4xl font-extrabold mb-4">{lesson.title}</h1>
+      </div>
+
+      <div className="max-w-4xl mx-auto px-4 -mt-12">
+        <VideoLessonCard lesson={lesson} levelId={level.id} />
+      </div>
+    </div>
+  );
+};
+
 const App: React.FC = () => {
   return (
     <Router>
@@ -361,6 +430,8 @@ const App: React.FC = () => {
           <ErrorBoundary>
           <Routes>
             <Route path="/" element={<HomePage />} />
+            <Route path="/level/:levelId/courses" element={<CoursesPage />} />
+            <Route path="/level/:levelId/videos/:lessonId" element={<VideoPlayerPage />} />
             <Route path="/level/:levelId/videos" element={<ContentPage type="videos" />} />
             <Route path="/level/:levelId/notes" element={<ContentPage type="notes" />} />
             <Route path="/admin-login" element={<AdminLogin />} />
