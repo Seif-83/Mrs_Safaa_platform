@@ -196,26 +196,60 @@ const VideoLessonCard: React.FC<{ lesson: Lesson; levelId: string }> = ({ lesson
     }
   }, [lesson.id, lesson.code, lesson.codes]);
 
-  // Detect screen recording attempts
+  // Detect screen recording attempts using multiple methods
   useEffect(() => {
-    const detectScreenShare = async () => {
+    let recordingCheckInterval: NodeJS.Timeout;
+    let focusCheckInterval: NodeJS.Timeout;
+
+    // Method 1: Monitor for getDisplayMedia usage (most reliable)
+    const originalGetDisplayMedia = navigator.mediaDevices?.getDisplayMedia;
+    if (originalGetDisplayMedia) {
+      (navigator.mediaDevices as any).getDisplayMedia = function (...args: any[]) {
+        handleScreenRecordingDetected();
+        return originalGetDisplayMedia.apply(this, args);
+      };
+    }
+
+    // Method 2: Monitor document visibility and page blur (fallback detection)
+    const handleVisibilityChange = () => {
+      // If document becomes hidden while not in fullscreen, might be recording
+      if (document.hidden && !document.fullscreenElement) {
+        handleScreenRecordingDetected();
+      }
+    };
+
+    const handleWindowBlur = () => {
+      // If window loses focus, could indicate screen recording
+      handleScreenRecordingDetected();
+    };
+
+    // Method 3: Periodic check using performance API
+    recordingCheckInterval = setInterval(() => {
       try {
-        // Check if screen capture is active
-        const displays = await (navigator as any).mediaDevices?.enumerateDevices?.();
-        if (displays) {
-          const screenDisplays = displays.filter((d: any) => d.kind === 'videoinput' && d.label.includes('Screen'));
-          if (screenDisplays.length > 0) {
+        // Check if performance timeline is growing unusually (sign of capture)
+        const entries = performance.getEntriesByType('navigation');
+        if (entries.length > 0) {
+          const now = performance.now();
+          // If we can't get accurate timing, might be under recording
+          if (now < 0 || isNaN(now)) {
             handleScreenRecordingDetected();
           }
         }
       } catch (err) {
-        // Silent catch - not all browsers support this
+        // Silent catch
       }
-    };
+    }, 2000);
 
-    // Check periodically
-    const interval = setInterval(detectScreenShare, 1000);
-    return () => clearInterval(interval);
+    // Add event listeners
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    window.addEventListener('blur', handleWindowBlur);
+
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('blur', handleWindowBlur);
+      clearInterval(recordingCheckInterval);
+      clearInterval(focusCheckInterval);
+    };
   }, []);
 
   // Handle screen recording detection
@@ -276,16 +310,24 @@ const VideoLessonCard: React.FC<{ lesson: Lesson; levelId: string }> = ({ lesson
 
   return (
     <div className="space-y-8">
-      {/* Screen recording warning */}
+      {/* Screen recording warning - persistent banner */}
       {isScreenRecording && (
-        <div className="bg-red-50 border-2 border-red-500 rounded-[2rem] p-6 text-center animate-pulse">
-          <div className="text-4xl mb-3">🚫</div>
-          <h3 className="text-red-700 font-bold text-xl mb-2">تم اكتشاف تسجيل الشاشة</h3>
-          <p className="text-red-600">
-            لا يُسمح بتشغيل الفيديو أثناء تسجيل الشاشة. يرجى إيقاف تسجيل الشاشة للمتابعة.
-          </p>
+        <div className="fixed top-0 left-0 right-0 z-[9999] bg-red-600 text-white py-4 px-4 text-center font-bold text-lg shadow-2xl animate-pulse">
+          🚫 تم اكتشاف تسجيل الشاشة - الفيديو محظور
         </div>
       )}
+
+      <div className={isScreenRecording ? 'blur-lg opacity-50' : ''}>
+        {/* Screen recording warning */}
+        {isScreenRecording && (
+          <div className="bg-red-50 border-2 border-red-500 rounded-[2rem] p-6 text-center animate-pulse">
+            <div className="text-4xl mb-3">🚫</div>
+            <h3 className="text-red-700 font-bold text-xl mb-2">تم اكتشاف تسجيل الشاشة</h3>
+            <p className="text-red-600">
+              لا يُسمح بتشغيل الفيديو أثناء تسجيل الشاشة. يرجى إيقاف تسجيل الشاشة للمتابعة.
+            </p>
+          </div>
+        )}
 
       {/* Lock overlay if needed */}
       {isLocked && ((lesson.codes?.length ?? 0) > 0 || lesson.code) && (
@@ -374,6 +416,7 @@ const VideoLessonCard: React.FC<{ lesson: Lesson; levelId: string }> = ({ lesson
           </div>
         </div>
       ))}
+      </div>
     </div>
   );
 };
