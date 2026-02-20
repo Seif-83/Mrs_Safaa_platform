@@ -324,35 +324,38 @@ const VideoLessonCard: React.FC<{ lesson: Lesson; levelId: string }> = ({ lesson
       {!isLocked && videos.map((video, idx) => (
         <div key={video.id} className="bg-glass rounded-[2rem] shadow-xl overflow-hidden border border-white/50 flex flex-col">
           <div className="aspect-video relative bg-black">
+            {/* Screen recording black screen overlay - takes full priority */}
+            {isScreenRecording && (
+              <div className="absolute inset-0 bg-black z-50 flex items-center justify-center">
+                <div className="text-center">
+                  <div className="text-6xl mb-4 animate-pulse">🚫</div>
+                  <p className="text-white font-bold text-lg mb-2">تسجيل الشاشة مكتشف</p>
+                  <p className="text-gray-300 text-sm">يرجى إيقاف التسجيل للمتابعة</p>
+                </div>
+              </div>
+            )}
+
             {video.videoUrl && (video.videoUrl.startsWith('data:') || video.videoUrl.endsWith('.mp4')) ? (
-              <>
-                <video 
-                  ref={el => { if (el) videoRefsMap.current[video.id] = el; }}
-                  className="w-full h-full" 
-                  src={video.videoUrl} 
-                  controls
-                  controlsList="nodownload"
-                  onPlay={(e) => {
-                    if (isScreenRecording) {
-                      (e.target as HTMLVideoElement).pause();
-                    }
-                  }}
-                />
-                {isScreenRecording && (
-                  <div className="absolute inset-0 bg-black/80 flex items-center justify-center z-10">
-                    <div className="text-center">
-                      <div className="text-4xl mb-3">🚫</div>
-                      <p className="text-white font-bold">تسجيل الشاشة مكتشف</p>
-                    </div>
-                  </div>
-                )}
-              </>
+              <video 
+                ref={el => { if (el) videoRefsMap.current[video.id] = el; }}
+                className="w-full h-full" 
+                src={video.videoUrl} 
+                controls
+                controlsList="nodownload"
+                style={isScreenRecording ? { opacity: 0 } : { opacity: 1 }}
+                onPlay={(e) => {
+                  if (isScreenRecording) {
+                    (e.target as HTMLVideoElement).pause();
+                  }
+                }}
+              />
             ) : (
               <iframe
                 className="w-full h-full"
                 src={video.videoUrl}
                 title={video.title}
                 allowFullScreen
+                style={isScreenRecording ? { opacity: 0 } : { opacity: 1 }}
               ></iframe>
             )}
           </div>
