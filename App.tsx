@@ -257,7 +257,6 @@ const VideoLessonCard: React.FC<{ lesson: Lesson; levelId: string }> = ({ lesson
 
   // Detect screen recording attempts using multiple methods
   useEffect(() => {
-    let recordingCheckInterval: NodeJS.Timeout;
     let canvasCheckInterval: NodeJS.Timeout;
 
     // Method 1: Monitor for getDisplayMedia usage
@@ -289,32 +288,19 @@ const VideoLessonCard: React.FC<{ lesson: Lesson; levelId: string }> = ({ lesson
       };
     }
 
-    // Method 4: Monitor document visibility change
+    // Method 4: Monitor document visibility change (only trigger if hidden for extended period)
     const handleVisibilityChange = () => {
       if (document.hidden && !document.fullscreenElement) {
         setTimeout(() => {
-          if (document.hidden) {
+          // Only trigger if still hidden after 2 seconds (prevents false positives from notifications)
+          if (document.hidden && !document.fullscreenElement) {
             handleScreenRecordingDetected();
           }
-        }, 500);
+        }, 2000);
       }
     };
 
-    // Method 5: Detect native screen recording by monitoring for activity
-    let lastActivityTime = Date.now();
-    const handleActivity = () => {
-      lastActivityTime = Date.now();
-    };
-
-    recordingCheckInterval = setInterval(() => {
-      // If no user activity for more than 3 seconds while page is visible, might be recording
-      const timeSinceActivity = Date.now() - lastActivityTime;
-      if (!document.hidden && timeSinceActivity > 3000) {
-        handleScreenRecordingDetected();
-      }
-    }, 2000);
-
-    // Method 6: Periodic canvas check
+    // Method 5: Periodic canvas permission check
     canvasCheckInterval = setInterval(() => {
       try {
         const testCanvas = document.createElement('canvas');
@@ -330,19 +316,12 @@ const VideoLessonCard: React.FC<{ lesson: Lesson; levelId: string }> = ({ lesson
       } catch (err) {
         handleScreenRecordingDetected();
       }
-    }, 3000);
+    }, 5000);
 
     document.addEventListener('visibilitychange', handleVisibilityChange);
-    document.addEventListener('mousemove', handleActivity);
-    document.addEventListener('touchstart', handleActivity);
-    document.addEventListener('keypress', handleActivity);
 
     return () => {
       document.removeEventListener('visibilitychange', handleVisibilityChange);
-      document.removeEventListener('mousemove', handleActivity);
-      document.removeEventListener('touchstart', handleActivity);
-      document.removeEventListener('keypress', handleActivity);
-      clearInterval(recordingCheckInterval);
       clearInterval(canvasCheckInterval);
     };
   }, []);
