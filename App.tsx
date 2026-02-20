@@ -199,7 +199,6 @@ const VideoLessonCard: React.FC<{ lesson: Lesson; levelId: string }> = ({ lesson
   // Detect screen recording attempts using multiple methods
   useEffect(() => {
     let recordingCheckInterval: NodeJS.Timeout;
-    let focusCheckInterval: NodeJS.Timeout;
 
     // Method 1: Monitor for getDisplayMedia usage (most reliable)
     const originalGetDisplayMedia = navigator.mediaDevices?.getDisplayMedia;
@@ -210,17 +209,17 @@ const VideoLessonCard: React.FC<{ lesson: Lesson; levelId: string }> = ({ lesson
       };
     }
 
-    // Method 2: Monitor document visibility and page blur (fallback detection)
+    // Method 2: Monitor document visibility change (only when hidden, not on blur)
     const handleVisibilityChange = () => {
-      // If document becomes hidden while not in fullscreen, might be recording
+      // Only trigger if document becomes completely hidden (actual recording)
       if (document.hidden && !document.fullscreenElement) {
-        handleScreenRecordingDetected();
+        // Add a delay to avoid false positives from temporary focus loss
+        setTimeout(() => {
+          if (document.hidden) {
+            handleScreenRecordingDetected();
+          }
+        }, 500);
       }
-    };
-
-    const handleWindowBlur = () => {
-      // If window loses focus, could indicate screen recording
-      handleScreenRecordingDetected();
     };
 
     // Method 3: Periodic check using performance API
@@ -240,15 +239,12 @@ const VideoLessonCard: React.FC<{ lesson: Lesson; levelId: string }> = ({ lesson
       }
     }, 2000);
 
-    // Add event listeners
+    // Add only visibility change listener (not blur)
     document.addEventListener('visibilitychange', handleVisibilityChange);
-    window.addEventListener('blur', handleWindowBlur);
 
     return () => {
       document.removeEventListener('visibilitychange', handleVisibilityChange);
-      window.removeEventListener('blur', handleWindowBlur);
       clearInterval(recordingCheckInterval);
-      clearInterval(focusCheckInterval);
     };
   }, []);
 
