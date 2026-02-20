@@ -2,12 +2,17 @@
 import React, { useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Link, useNavigate } from 'react-router-dom';
+import { useContentStore } from '../useContentStore';
+import { useStudentStore } from '../useStudentStore';
 
 const Navbar: React.FC = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const navigate = useNavigate();
   const isStudentLoggedIn = sessionStorage.getItem('student_logged_in') === 'true';
   const studentName = sessionStorage.getItem('student_name') || '';
+  const studentLevel = sessionStorage.getItem('student_level') || '';
+  const { levels } = useContentStore();
+  const { updateStudent } = useStudentStore();
 
   const handleStudentLogout = () => {
     sessionStorage.removeItem('student_logged_in');
@@ -42,6 +47,28 @@ const Navbar: React.FC = () => {
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
                   {studentName}
                 </span>
+                <select
+                  value={studentLevel}
+                  onChange={async e => {
+                    const newLevel = e.target.value;
+                    sessionStorage.setItem('student_level', newLevel);
+                    const sid = sessionStorage.getItem('student_id');
+                    if (sid) {
+                      try {
+                        await updateStudent(sid, { level: newLevel });
+                      } catch (err) {
+                        console.error('Failed to update student level', err);
+                      }
+                    }
+                    // refresh to apply new level everywhere
+                    window.location.reload();
+                  }}
+                  className="p-1 rounded text-sm border ml-2"
+                >
+                  {levels.map(l => (
+                    <option key={l.id} value={l.id}>{l.titleAr}</option>
+                  ))}
+                </select>
                 <button
                   onClick={handleStudentLogout}
                   className="text-gray-400 hover:text-red-500 text-sm font-medium transition-colors"
@@ -102,12 +129,34 @@ const Navbar: React.FC = () => {
                     <span className="text-xs text-gray-500 block mb-1">مرحباً بك</span>
                     <span className="text-sky-700 font-bold text-lg">{studentName} 🎓</span>
                   </div>
-                  <button
-                    onClick={handleStudentLogout}
-                    className="w-full py-2 bg-white text-red-500 border border-red-100 rounded-xl text-sm font-bold shadow-sm hover:bg-red-50 transition-all"
-                  >
-                    تسجيل الخروج
-                  </button>
+                    <div className="mb-3 text-right">
+                      <label className="text-xs text-gray-500">المرحلة:</label>
+                      <select
+                        value={studentLevel}
+                        onChange={async e => {
+                          const newLevel = e.target.value;
+                          sessionStorage.setItem('student_level', newLevel);
+                          const sid = sessionStorage.getItem('student_id');
+                          if (sid) {
+                            try {
+                              await updateStudent(sid, { level: newLevel });
+                            } catch (err) {
+                              console.error('Failed to update student level', err);
+                            }
+                          }
+                          window.location.reload();
+                        }}
+                        className="w-full mt-2 p-2 rounded border"
+                      >
+                        {levels.map(l => <option key={l.id} value={l.id}>{l.titleAr}</option>)}
+                      </select>
+                    </div>
+                    <button
+                      onClick={handleStudentLogout}
+                      className="w-full py-2 bg-white text-red-500 border border-red-100 rounded-xl text-sm font-bold shadow-sm hover:bg-red-50 transition-all"
+                    >
+                      تسجيل الخروج
+                    </button>
                 </div>
               ) : (
                 <Link to="/student-login" onClick={() => setIsMenuOpen(false)} className="block text-center text-lg font-bold text-white py-3 px-4 rounded-xl bg-gradient-to-r from-sky-500 to-teal-400 shadow-lg shadow-sky-500/20 mt-4 transition-transform active:scale-95">

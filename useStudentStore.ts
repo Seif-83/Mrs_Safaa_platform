@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { ref, onValue, set, push, remove, get } from 'firebase/database';
+import { ref, onValue, set, push, remove, get, update } from 'firebase/database';
 import { db } from './firebase';
 
 export interface Student {
@@ -86,5 +86,10 @@ export function useStudentStore() {
         await remove(ref(db, `${DB_PATH}/${studentId}`));
     }, []);
 
-    return { students, isLoading, registerStudent, removeStudent, loginByPhone };
+    const updateStudent = useCallback(async (studentId: string, data: Partial<Student>) => {
+        if (!studentId) throw new Error('studentId required');
+        await update(ref(db, `${DB_PATH}/${studentId}`), data as any);
+    }, []);
+
+    return { students, isLoading, registerStudent, removeStudent, loginByPhone, updateStudent };
 }

@@ -40,6 +40,7 @@ const StudentLogin: React.FC = () => {
                 sessionStorage.setItem('student_name', student.name);
                 sessionStorage.setItem('student_phone', student.phone);
                 sessionStorage.setItem('student_level', student.level || '1st-prep'); // Default or stored
+                sessionStorage.setItem('student_id', (student as any).id || '');
                 navigate('/');
             } else {
                 // Move to registration step
@@ -63,12 +64,13 @@ const StudentLogin: React.FC = () => {
         const phoneClean = phone.trim().replace(/\s/g, '');
 
         try {
-            await registerStudent(name.trim(), phoneClean, level);
+            const id = await registerStudent(name.trim(), phoneClean, level);
             // Login after registration
             sessionStorage.setItem('student_logged_in', 'true');
             sessionStorage.setItem('student_name', name.trim());
             sessionStorage.setItem('student_phone', phoneClean);
             sessionStorage.setItem('student_level', level);
+            if (id) sessionStorage.setItem('student_id', id);
             navigate('/');
         } catch (err: any) {
             setError(err.message || 'حدث خطأ أثناء التسجيل');
