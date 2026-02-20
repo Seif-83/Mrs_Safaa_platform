@@ -43,6 +43,15 @@ const Navbar: React.FC = () => {
             <Link to="/" className="text-gray-600 hover:text-sky-600 font-medium transition-colors">الرئيسية</Link>
             {isStudentLoggedIn ? (
               <div className="flex items-center gap-3">
+                <a
+                  href="https://ipn.eg/S/safaaesmail1980/instapay/9fQhwu"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="bg-gradient-to-r from-green-500 to-emerald-500 text-white px-4 py-2 rounded-full font-bold text-sm hover:shadow-lg hover:shadow-green-500/30 transition-all flex items-center gap-2"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2 10m10 0l2-10m0 0h2.4M17 7l-2 10" /></svg>
+                  وسيلة دفع
+                </a>
                 <span className="text-sky-600 font-bold text-sm flex items-center gap-1">
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
                   {studentName}
@@ -151,6 +160,15 @@ const Navbar: React.FC = () => {
                         {levels.map(l => <option key={l.id} value={l.id}>{l.titleAr}</option>)}
                       </select>
                     </div>
+                    <a
+                      href="https://ipn.eg/S/safaaesmail1980/instapay/9fQhwu"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      onClick={() => setIsMenuOpen(false)}
+                      className="block w-full py-2 mb-3 bg-gradient-to-r from-green-500 to-emerald-500 text-white rounded-xl text-sm font-bold shadow-lg hover:shadow-xl transition-all text-center"
+                    >
+                      💳 وسيلة الدفع
+                    </a>
                     <button
                       onClick={handleStudentLogout}
                       className="w-full py-2 bg-white text-red-500 border border-red-100 rounded-xl text-sm font-bold shadow-sm hover:bg-red-50 transition-all"
