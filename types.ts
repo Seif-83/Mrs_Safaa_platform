@@ -1,10 +1,18 @@
 
 export type PrepLevel = '1st-prep' | '2nd-prep' | '3rd-prep';
 
-export interface Lesson {
+export interface Video {
   id: string;
   title: string;
   videoUrl: string;
+  description?: string;
+}
+
+export interface Lesson {
+  id: string;
+  title: string;
+  videoUrl?: string; // legacy single video URL
+  videos?: Video[]; // new: multiple videos
   pdfUrl: string;
   description: string;
   code?: string;

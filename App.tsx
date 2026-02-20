@@ -236,62 +236,72 @@ const VideoLessonCard: React.FC<{ lesson: Lesson; levelId: string }> = ({ lesson
     }
   };
 
+  // Get videos from lesson: either new videos array or fallback to single videoUrl
+  const videos = lesson.videos && lesson.videos.length > 0 
+    ? lesson.videos 
+    : (lesson.videoUrl ? [{ id: 'legacy-' + lesson.id, title: lesson.title, videoUrl: lesson.videoUrl }] : []);
+
   return (
-    <div className="bg-glass rounded-[2rem] shadow-xl overflow-hidden border border-white/50 flex flex-col hover:shadow-2xl transition-all group">
-      <div className="aspect-video relative" style={lesson.coverImage && isLocked ? { backgroundImage: `url(${lesson.coverImage})`, backgroundSize: 'cover', backgroundPosition: 'center', backgroundColor: '#000' } : { backgroundColor: '#000' }}>
-        {lesson.videoUrl && (lesson.videoUrl.startsWith('data:') || lesson.videoUrl.endsWith('.mp4')) ? (
-          <div className="absolute top-2 right-2 z-10">
-            <span className="bg-white/40 text-xs px-2 py-1 rounded">محمّل</span>
+    <div className="space-y-8">
+      {/* Lock overlay if needed */}
+      {isLocked && ((lesson.codes?.length ?? 0) > 0 || lesson.code) && (
+        <div className="bg-glass rounded-[2rem] shadow-xl border border-white/50 p-12 text-center">
+          <div className="w-20 h-20 bg-gray-800 rounded-full flex items-center justify-center mx-auto mb-6">
+            <span className="text-5xl">🔒</span>
           </div>
-        ) : null}
-        {isLocked ? (
-          <div className="absolute inset-0 bg-gray-900/60 flex flex-col items-center justify-center p-6 text-center z-20">
-            <div className="w-12 h-12 bg-gray-800 rounded-full flex items-center justify-center mb-3">
-              <span className="text-2xl">🔒</span>
+          <h3 className="text-white font-bold mb-2 text-2xl">هذه الفيديوهات محمية بكود</h3>
+          {lesson.codes && lesson.codes.length > 0 && lesson.codes.every(c => c.used) ? (
+            <div className="text-gray-300 max-w-xs mx-auto mt-4">
+              <p className="mb-2">عذراً، لا توجد أكواد متاحة حالياً.</p>
+              <p>يرجى التواصل مع المعلم للحصول على أكواد جديدة.</p>
             </div>
-            <h4 className="text-white font-bold mb-2">هذا الفيديو محمي بكود</h4>
-            {lesson.codes && lesson.codes.length > 0 && lesson.codes.every(c => c.used) ? (
-              <div className="text-sm text-gray-300 max-w-xs">
-                <p className="mb-2">عذراً، لا توجد أكواد متاحة لهذا الدرس حالياً.</p>
-                <p>يرجى التواصل مع المعلم للحصول على أكواد جديدة.</p>
-              </div>
+          ) : (
+            <form onSubmit={handleUnlock} className="w-full max-w-xs space-y-3 mt-6 mx-auto">
+              <input
+                type="text"
+                value={code}
+                onChange={e => setCode(e.target.value)}
+                placeholder="أدخل كود الفيديو"
+                className="w-full px-4 py-3 rounded-lg bg-gray-800 border border-gray-700 text-white text-center focus:ring-2 focus:ring-sky-500 outline-none"
+              />
+              {error && <p className="text-red-400 text-sm font-bold">{error}</p>}
+              <button
+                type="submit"
+                className="w-full py-2 bg-sky-600 hover:bg-sky-700 text-white rounded-lg font-bold transition-colors"
+              >
+                مشاهدة
+              </button>
+            </form>
+          )}
+        </div>
+      )}
+
+      {/* Display all videos */}
+      {!isLocked && videos.map((video, idx) => (
+        <div key={video.id} className="bg-glass rounded-[2rem] shadow-xl overflow-hidden border border-white/50 flex flex-col">
+          <div className="aspect-video relative bg-black">
+            {video.videoUrl && (video.videoUrl.startsWith('data:') || video.videoUrl.endsWith('.mp4')) ? (
+              <video className="w-full h-full" src={video.videoUrl} controls />
             ) : (
-              <form onSubmit={handleUnlock} className="w-full max-w-xs space-y-2">
-                <input
-                  type="text"
-                  value={code}
-                  onChange={e => setCode(e.target.value)}
-                  placeholder="أدخل كود الفيديو"
-                  className="w-full px-4 py-2 rounded-lg bg-gray-800 border border-gray-700 text-white text-center focus:ring-2 focus:ring-sky-500 outline-none"
-                />
-                {error && <p className="text-red-500 text-sm font-bold">{error}</p>}
-                <button
-                  type="submit"
-                  className="w-full py-2 bg-sky-600 hover:bg-sky-700 text-white rounded-lg font-bold transition-colors"
-                >
-                  مشاهدة
-                </button>
-              </form>
+              <iframe
+                className="w-full h-full"
+                src={video.videoUrl}
+                title={video.title}
+                allowFullScreen
+              ></iframe>
             )}
           </div>
-        ) : (
-          // when unlocked show video element for uploaded files, otherwise iframe
-          (lesson.videoUrl && (lesson.videoUrl.startsWith('data:') || lesson.videoUrl.endsWith('.mp4'))) ? (
-            <video className="w-full h-full relative z-10" src={lesson.videoUrl} controls />
-          ) : (
-            <iframe
-              className="w-full h-full relative z-10"
-              src={lesson.videoUrl}
-              title={lesson.title}
-              allowFullScreen
-            ></iframe>
-          )
-        )}
-      </div>
-      <div className="p-8">
-        <h3 className="text-2xl font-bold text-gray-900 mb-3">{lesson.title}</h3>
-        <p className="text-gray-500 leading-relaxed mb-8">{lesson.description}</p>
-      </div>
+          <div className="p-8">
+            <h3 className="text-2xl font-bold text-gray-900 mb-3">📹 {video.title}</h3>
+            {video.description && (
+              <p className="text-gray-500 leading-relaxed">{video.description}</p>
+            )}
+            {videos.length > 1 && (
+              <p className="text-gray-400 text-sm mt-4">الفيديو {idx + 1} من {videos.length}</p>
+            )}
+          </div>
+        </div>
+      ))}
     </div>
   );
 };

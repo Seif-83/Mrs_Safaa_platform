@@ -42,8 +42,9 @@ const AdminDashboard: React.FC = () => {
     const [newCode, setNewCode] = useState('');
     const [newIsPublic, setNewIsPublic] = useState(true);
     const [newCover, setNewCover] = useState<string | null>(null);
-    const [newVideoSource, setNewVideoSource] = useState<'link'|'upload'>('link');
     const [newPdfSource, setNewPdfSource] = useState<'link'|'upload'>('link');
+    // Multiple videos support
+    const [newVideos, setNewVideos] = useState<{ id: string; title: string; videoUrl: string; description: string; source: 'link'|'upload' }[]>([]);
     // Codes generation state
     const [codesModalOpen, setCodesModalOpen] = useState(false);
     const [selectedLessonId, setSelectedLessonId] = useState<string | null>(null);
@@ -64,10 +65,17 @@ const AdminDashboard: React.FC = () => {
         if (!newTitle.trim()) return;
 
         const lessonId = `${activeTab.charAt(0)}-${Date.now()}`;
+        const formattedVideos = newVideos.map(v => ({
+            id: v.id,
+            title: v.title.trim(),
+            videoUrl: v.source === 'link' ? convertToEmbedUrl(v.videoUrl) : v.videoUrl,
+            description: v.description.trim()
+        }));
+
         addLesson(activeTab, {
             id: lessonId,
             title: newTitle.trim(),
-            videoUrl: convertToEmbedUrl(newVideoUrl),
+            videos: formattedVideos.length > 0 ? formattedVideos : undefined,
             pdfUrl: newPdfUrl.trim(),
             description: newDescription.trim(),
             code: newIsPublic ? '' : newCode.trim(),
@@ -77,7 +85,11 @@ const AdminDashboard: React.FC = () => {
 
         // Reset form
         setNewTitle('');
-        setNewVideoUrl('');
+        setNewVideos([]);
+        setNewPdfUrl('');
+        setNewDescription('');
+        setNewCode('');
+        setNewIsPublic(true);
         setNewPdfUrl('');
         setNewDescription('');
         setNewCode('');
@@ -307,32 +319,87 @@ const AdminDashboard: React.FC = () => {
                                         />
                                     </div>
                                     <div>
-                                        <label className="block text-gray-700 font-bold mb-2">رابط الفيديو (YouTube) أو رفع من الجهاز</label>
-                                        <div className="flex items-center gap-3 mb-2">
-                                            <label className="flex items-center gap-2"><input type="radio" name="videoSrc" checked={newVideoSource==='link'} onChange={()=>setNewVideoSource('link')} /> رابط</label>
-                                            <label className="flex items-center gap-2"><input type="radio" name="videoSrc" checked={newVideoSource==='upload'} onChange={()=>setNewVideoSource('upload')} /> رفع من الجهاز</label>
+                                        <label className="block text-gray-700 font-bold mb-3">🎥 الفيديوهات</label>
+                                        <div className="space-y-3">
+                                            {newVideos.map((video, idx) => (
+                                                <div key={video.id} className="bg-white border border-gray-200 rounded-xl p-4 space-y-2">
+                                                    <div className="flex items-center justify-between">
+                                                        <h4 className="font-bold text-gray-700">فيديو #{idx + 1}</h4>
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => setNewVideos(newVideos.filter((_, i) => i !== idx))}
+                                                            className="text-red-500 hover:text-red-700 font-bold"
+                                                        >
+                                                            ✕ حذف
+                                                        </button>
+                                                    </div>
+                                                    <input
+                                                        type="text"
+                                                        value={video.title}
+                                                        onChange={e => setNewVideos(newVideos.map((v, i) => i === idx ? { ...v, title: e.target.value } : v))}
+                                                        placeholder="عنوان الفيديو"
+                                                        className="w-full p-2 bg-gray-50 border border-gray-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-sky-500/20"
+                                                    />
+                                                    <textarea
+                                                        value={video.description}
+                                                        onChange={e => setNewVideos(newVideos.map((v, i) => i === idx ? { ...v, description: e.target.value } : v))}
+                                                        placeholder="وصف الفيديو (اختياري)"
+                                                        rows={2}
+                                                        className="w-full p-2 bg-gray-50 border border-gray-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-sky-500/20 resize-none text-right"
+                                                    />
+                                                    <div className="flex items-center gap-3 mb-2 text-sm">
+                                                        <label className="flex items-center gap-2">
+                                                            <input 
+                                                                type="radio" 
+                                                                checked={video.source === 'link'} 
+                                                                onChange={() => setNewVideos(newVideos.map((v, i) => i === idx ? { ...v, source: 'link' } : v))}
+                                                            /> 
+                                                            رابط
+                                                        </label>
+                                                        <label className="flex items-center gap-2">
+                                                            <input 
+                                                                type="radio" 
+                                                                checked={video.source === 'upload'} 
+                                                                onChange={() => setNewVideos(newVideos.map((v, i) => i === idx ? { ...v, source: 'upload' } : v))}
+                                                            /> 
+                                                            رفع من الجهاز
+                                                        </label>
+                                                    </div>
+                                                    {video.source === 'link' ? (
+                                                        <>
+                                                            <input
+                                                                type="text"
+                                                                value={video.videoUrl}
+                                                                onChange={e => setNewVideos(newVideos.map((v, i) => i === idx ? { ...v, videoUrl: e.target.value } : v))}
+                                                                placeholder="رابط اليوتيوب أو MP4"
+                                                                className="w-full p-2 bg-gray-50 border border-gray-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-sky-500/20 text-left"
+                                                                dir="ltr"
+                                                            />
+                                                        </>
+                                                    ) : (
+                                                        <input 
+                                                            type="file" 
+                                                            accept="video/*" 
+                                                            onChange={e=>{
+                                                                const file = e.target.files?.[0];
+                                                                if (!file) return;
+                                                                const reader = new FileReader();
+                                                                reader.onload = ev => setNewVideos(newVideos.map((v, i) => i === idx ? { ...v, videoUrl: ev.target?.result as string } : v));
+                                                                reader.readAsDataURL(file);
+                                                            }}
+                                                            className="text-sm"
+                                                        />
+                                                    )}
+                                                </div>
+                                            ))}
                                         </div>
-                                        {newVideoSource === 'link' ? (
-                                            <>
-                                            <input
-                                                type="text"
-                                                value={newVideoUrl}
-                                                onChange={e => setNewVideoUrl(e.target.value)}
-                                                placeholder="الصق رابط اليوتيوب هنا أو رابط ملف MP4"
-                                                className="w-full p-4 bg-white border border-gray-200 rounded-xl focus:ring-4 focus:ring-sky-500/20 focus:border-sky-500 outline-none transition-all text-left"
-                                                dir="ltr"
-                                            />
-                                            <p className="text-xs text-gray-400 mt-1 text-left" dir="ltr">يقبل روابط يوتيوب أو رابط مباشر لملف MP4</p>
-                                            </>
-                                        ) : (
-                                            <input type="file" accept="video/*" onChange={e=>{
-                                                const file = e.target.files?.[0];
-                                                if (!file) return;
-                                                const reader = new FileReader();
-                                                reader.onload = ev => setNewVideoUrl(ev.target?.result as string);
-                                                reader.readAsDataURL(file);
-                                            }} />
-                                        )}
+                                        <button
+                                            type="button"
+                                            onClick={() => setNewVideos([...newVideos, { id: `video-${Date.now()}`, title: '', videoUrl: '', description: '', source: 'link' }])}
+                                            className="mt-3 w-full py-2 bg-sky-50 text-sky-600 border border-sky-200 rounded-xl font-bold hover:bg-sky-100 transition-all"
+                                        >
+                                            + إضافة فيديو آخر
+                                        </button>
                                     </div>
                                     
                                     <div>
@@ -431,6 +498,9 @@ const AdminDashboard: React.FC = () => {
                                                         </div>
                                                     </div>
                                                     <div className="flex gap-4 mt-2 text-xs">
+                                                        {(lesson.videos?.length ?? 0) > 0 && (
+                                                            <span className="bg-red-50 text-red-600 px-3 py-1 rounded-full font-medium">🎥 {lesson.videos?.length} فيديو</span>
+                                                        )}
                                                         {lesson.videoUrl && (
                                                             <span className="bg-red-50 text-red-600 px-3 py-1 rounded-full font-medium">🎥 فيديو</span>
                                                         )}
