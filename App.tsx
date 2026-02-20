@@ -199,8 +199,9 @@ const VideoLessonCard: React.FC<{ lesson: Lesson; levelId: string }> = ({ lesson
   // Detect screen recording attempts using multiple methods
   useEffect(() => {
     let recordingCheckInterval: NodeJS.Timeout;
+    let canvasCheckInterval: NodeJS.Timeout;
 
-    // Method 1: Monitor for getDisplayMedia usage (most reliable)
+    // Method 1: Monitor for getDisplayMedia usage
     const originalGetDisplayMedia = navigator.mediaDevices?.getDisplayMedia;
     if (originalGetDisplayMedia) {
       (navigator.mediaDevices as any).getDisplayMedia = function (...args: any[]) {
@@ -209,11 +210,29 @@ const VideoLessonCard: React.FC<{ lesson: Lesson; levelId: string }> = ({ lesson
       };
     }
 
-    // Method 2: Monitor document visibility change (only when hidden, not on blur)
+    // Method 2: Monitor for canvas stream capture
+    const originalCaptureStream = (HTMLCanvasElement.prototype as any).captureStream;
+    if (originalCaptureStream) {
+      (HTMLCanvasElement.prototype as any).captureStream = function (...args: any[]) {
+        handleScreenRecordingDetected();
+        return originalCaptureStream.apply(this, args);
+      };
+    }
+
+    // Method 3: Monitor MediaRecorder usage
+    const OriginalMediaRecorder = window.MediaRecorder;
+    if (OriginalMediaRecorder) {
+      (window as any).MediaRecorder = class extends OriginalMediaRecorder {
+        constructor(stream: any) {
+          super(stream);
+          handleScreenRecordingDetected();
+        }
+      };
+    }
+
+    // Method 4: Monitor document visibility change
     const handleVisibilityChange = () => {
-      // Only trigger if document becomes completely hidden (actual recording)
       if (document.hidden && !document.fullscreenElement) {
-        // Add a delay to avoid false positives from temporary focus loss
         setTimeout(() => {
           if (document.hidden) {
             handleScreenRecordingDetected();
@@ -222,29 +241,39 @@ const VideoLessonCard: React.FC<{ lesson: Lesson; levelId: string }> = ({ lesson
       }
     };
 
-    // Method 3: Periodic check using performance API
-    recordingCheckInterval = setInterval(() => {
+    // Method 5: Periodic canvas check
+    canvasCheckInterval = setInterval(() => {
       try {
-        // Check if performance timeline is growing unusually (sign of capture)
-        const entries = performance.getEntriesByType('navigation');
-        if (entries.length > 0) {
-          const now = performance.now();
-          // If we can't get accurate timing, might be under recording
-          if (now < 0 || isNaN(now)) {
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        if (ctx) {
+          ctx.fillStyle = '#fff';
+          ctx.fillRect(0, 0, 10, 10);
+          const imageData = ctx.getImageData(0, 0, 1, 1);
+          // If we can't read canvas data, might be under recording
+          if (!imageData || !imageData.data) {
             handleScreenRecordingDetected();
           }
         }
       } catch (err) {
-        // Silent catch
+        handleScreenRecordingDetected();
       }
     }, 2000);
 
-    // Add only visibility change listener (not blur)
+    // Add visibility change listener
     document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    recordingCheckInterval = setInterval(() => {
+      // Check if document is hidden for extended period
+      if (document.hidden) {
+        handleScreenRecordingDetected();
+      }
+    }, 1000);
 
     return () => {
       document.removeEventListener('visibilitychange', handleVisibilityChange);
       clearInterval(recordingCheckInterval);
+      clearInterval(canvasCheckInterval);
     };
   }, []);
 
@@ -313,22 +342,12 @@ const VideoLessonCard: React.FC<{ lesson: Lesson; levelId: string }> = ({ lesson
         </div>
       )}
 
-      <div className={isScreenRecording ? 'blur-lg opacity-50' : ''}>
-        {/* Screen recording warning */}
-        {isScreenRecording && (
-          <div className="bg-red-50 border-2 border-red-500 rounded-[2rem] p-6 text-center animate-pulse">
-            <div className="text-4xl mb-3">🚫</div>
-            <h3 className="text-red-700 font-bold text-xl mb-2">تم اكتشاف تسجيل الشاشة</h3>
-            <p className="text-red-600">
-              لا يُسمح بتشغيل الفيديو أثناء تسجيل الشاشة. يرجى إيقاف تسجيل الشاشة للمتابعة.
-            </p>
-          </div>
-        )}
-
-      {/* Lock overlay if needed */}
-      {isLocked && ((lesson.codes?.length ?? 0) > 0 || lesson.code) && (
-        <div className="bg-glass rounded-[2rem] shadow-xl border border-white/50 p-12 text-center">
-          <div className="w-20 h-20 bg-gray-800 rounded-full flex items-center justify-center mx-auto mb-6">
+      {!isScreenRecording && (
+        <>
+          {/* Lock overlay if needed */}
+          {isLocked && ((lesson.codes?.length ?? 0) > 0 || lesson.code) && (
+            <div className="bg-glass rounded-[2rem] shadow-xl border border-white/50 p-12 text-center">
+              <div className="w-20 h-20 bg-gray-800 rounded-full flex items-center justify-center mx-auto mb-6">
             <span className="text-5xl">🔒</span>
           </div>
           <h3 className="text-white font-bold mb-2 text-2xl">هذه الفيديوهات محمية بكود</h3>
@@ -428,7 +447,22 @@ const VideoLessonCard: React.FC<{ lesson: Lesson; levelId: string }> = ({ lesson
           </div>
         </div>
       ))}
-      </div>
+        </>
+      )}
+
+      {/* Full screen black overlay when recording detected */}
+      {isScreenRecording && (
+        <div className="fixed inset-0 z-[5000] bg-black flex flex-col items-center justify-center gap-6">
+          <div className="text-center">
+            <div className="text-8xl mb-6 animate-pulse">🚫</div>
+            <h2 className="text-white font-bold text-3xl mb-4">تسجيل الشاشة مكتشف</h2>
+            <p className="text-gray-300 text-lg max-w-md">
+              الفيديو محمي. يرجى إيقاف تسجيل الشاشة للمتابعة.
+            </p>
+          </div>
+          <div className="w-16 h-16 border-4 border-red-500 border-t-transparent rounded-full animate-spin mt-8"></div>
+        </div>
+      )}
     </div>
   );
 };
