@@ -183,6 +183,8 @@ const VideoLessonCard: React.FC<{ lesson: Lesson; levelId: string }> = ({ lesson
   });
   const [code, setCode] = useState('');
   const [error, setError] = useState('');
+  const [isScreenRecording, setIsScreenRecording] = useState(false);
+  const videoRefsMap = React.useRef<{ [key: string]: HTMLVideoElement | null }>({});
 
   // Keep locked state in sync when lesson changes
   useEffect(() => {
@@ -193,6 +195,37 @@ const VideoLessonCard: React.FC<{ lesson: Lesson; levelId: string }> = ({ lesson
       setIsLocked(!!lesson.code);
     }
   }, [lesson.id, lesson.code, lesson.codes]);
+
+  // Detect screen recording attempts
+  useEffect(() => {
+    const detectScreenShare = async () => {
+      try {
+        // Check if screen capture is active
+        const displays = await (navigator as any).mediaDevices?.enumerateDevices?.();
+        if (displays) {
+          const screenDisplays = displays.filter((d: any) => d.kind === 'videoinput' && d.label.includes('Screen'));
+          if (screenDisplays.length > 0) {
+            handleScreenRecordingDetected();
+          }
+        }
+      } catch (err) {
+        // Silent catch - not all browsers support this
+      }
+    };
+
+    // Check periodically
+    const interval = setInterval(detectScreenShare, 1000);
+    return () => clearInterval(interval);
+  }, []);
+
+  // Handle screen recording detection
+  const handleScreenRecordingDetected = () => {
+    setIsScreenRecording(true);
+    // Pause all videos
+    Object.values(videoRefsMap.current).forEach(video => {
+      if (video && video instanceof HTMLVideoElement) video.pause();
+    });
+  };
 
   const handleUnlock = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -243,6 +276,17 @@ const VideoLessonCard: React.FC<{ lesson: Lesson; levelId: string }> = ({ lesson
 
   return (
     <div className="space-y-8">
+      {/* Screen recording warning */}
+      {isScreenRecording && (
+        <div className="bg-red-50 border-2 border-red-500 rounded-[2rem] p-6 text-center animate-pulse">
+          <div className="text-4xl mb-3">🚫</div>
+          <h3 className="text-red-700 font-bold text-xl mb-2">تم اكتشاف تسجيل الشاشة</h3>
+          <p className="text-red-600">
+            لا يُسمح بتشغيل الفيديو أثناء تسجيل الشاشة. يرجى إيقاف تسجيل الشاشة للمتابعة.
+          </p>
+        </div>
+      )}
+
       {/* Lock overlay if needed */}
       {isLocked && ((lesson.codes?.length ?? 0) > 0 || lesson.code) && (
         <div className="bg-glass rounded-[2rem] shadow-xl border border-white/50 p-12 text-center">
@@ -281,7 +325,28 @@ const VideoLessonCard: React.FC<{ lesson: Lesson; levelId: string }> = ({ lesson
         <div key={video.id} className="bg-glass rounded-[2rem] shadow-xl overflow-hidden border border-white/50 flex flex-col">
           <div className="aspect-video relative bg-black">
             {video.videoUrl && (video.videoUrl.startsWith('data:') || video.videoUrl.endsWith('.mp4')) ? (
-              <video className="w-full h-full" src={video.videoUrl} controls />
+              <>
+                <video 
+                  ref={el => { if (el) videoRefsMap.current[video.id] = el; }}
+                  className="w-full h-full" 
+                  src={video.videoUrl} 
+                  controls
+                  controlsList="nodownload"
+                  onPlay={(e) => {
+                    if (isScreenRecording) {
+                      (e.target as HTMLVideoElement).pause();
+                    }
+                  }}
+                />
+                {isScreenRecording && (
+                  <div className="absolute inset-0 bg-black/80 flex items-center justify-center z-10">
+                    <div className="text-center">
+                      <div className="text-4xl mb-3">🚫</div>
+                      <p className="text-white font-bold">تسجيل الشاشة مكتشف</p>
+                    </div>
+                  </div>
+                )}
+              </>
             ) : (
               <iframe
                 className="w-full h-full"
@@ -299,6 +364,10 @@ const VideoLessonCard: React.FC<{ lesson: Lesson; levelId: string }> = ({ lesson
             {videos.length > 1 && (
               <p className="text-gray-400 text-sm mt-4">الفيديو {idx + 1} من {videos.length}</p>
             )}
+            <p className="text-gray-400 text-xs mt-3 flex items-center gap-2">
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>
+              الفيديو محمي من التنزيل وتسجيل الشاشة
+            </p>
           </div>
         </div>
       ))}
