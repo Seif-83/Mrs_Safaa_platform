@@ -103,3 +103,29 @@ a {
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
+
+/* Video protection - prevent downloads and context menu */
+video {
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-user-drag: none;
+  pointer-events: auto;
+}
+
+video::after {
+  content: '';
+}
+
+/* Disable context menu for video and its container */
+video, .aspect-video {
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+}
+
+/* Prevent long press menu on mobile */
+@media (max-width: 768px) {
+  video {
+    -webkit-user-select: none;
+    -webkit-user-drag: none;
+  }
+}

@@ -386,6 +386,22 @@ const VideoLessonCard: React.FC<{ lesson: Lesson; levelId: string }> = ({ lesson
                     (e.target as HTMLVideoElement).pause();
                   }
                 }}
+                onContextMenu={(e) => {
+                  e.preventDefault();
+                  return false;
+                }}
+                onTouchStart={(e) => {
+                  // Prevent long press context menu on mobile
+                  const longPressTimer = setTimeout(() => {
+                    e.preventDefault();
+                  }, 500);
+                  
+                  const handleTouchEnd = () => {
+                    clearTimeout(longPressTimer);
+                    document.removeEventListener('touchend', handleTouchEnd);
+                  };
+                  document.addEventListener('touchend', handleTouchEnd);
+                }}
               />
             ) : (
               <iframe
