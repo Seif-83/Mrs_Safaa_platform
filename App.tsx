@@ -67,7 +67,7 @@ const HomePage: React.FC = () => {
   const [studentLevel, setStudentLevel] = useState<string | null>(null);
 
   // Always initialize exam store hooks to preserve hook order
-  const { exams } = useExamStore();
+  const { exams, isLoading: isExamsLoading } = useExamStore();
 
   useEffect(() => {
     const loggedIn = sessionStorage.getItem('student_logged_in') === 'true';
@@ -76,7 +76,7 @@ const HomePage: React.FC = () => {
     setStudentLevel(level);
   }, []);
 
-  if (isLoading) {
+  if (isLoading || isExamsLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center relative z-10">
         <div className="text-center">
