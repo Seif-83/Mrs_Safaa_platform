@@ -183,9 +183,6 @@ const VideoLessonCard: React.FC<{ lesson: Lesson; levelId: string }> = ({ lesson
   });
   const [code, setCode] = useState('');
   const [error, setError] = useState('');
-  const [isScreenRecording, setIsScreenRecording] = useState(false);
-  const videoRefsMap = React.useRef<{ [key: string]: HTMLVideoElement | null }>({});
-  const canvasOverlayRef = React.useRef<HTMLCanvasElement>(null);
 
   // Keep locked state in sync when lesson changes
   useEffect(() => {
@@ -197,143 +194,7 @@ const VideoLessonCard: React.FC<{ lesson: Lesson; levelId: string }> = ({ lesson
     }
   }, [lesson.id, lesson.code, lesson.codes]);
 
-  // Animated canvas watermark to prevent screen recording
-  useEffect(() => {
-    let animationId: number;
-    const canvas = canvasOverlayRef.current;
-    if (!canvas) return;
 
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-
-    const animate = () => {
-      // Set canvas size to match video
-      const rect = canvas.parentElement?.getBoundingClientRect();
-      if (rect) {
-        canvas.width = rect.width;
-        canvas.height = rect.height;
-      }
-
-      // Clear canvas
-      ctx.fillStyle = 'rgba(0, 0, 0, 0)';
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-      // Add dynamic watermark that changes constantly to prevent recording
-      const time = Date.now() / 1000;
-      const opacity = 0.3 + Math.sin(time * 2) * 0.1;
-      
-      // Draw multiple watermarks at different angles
-      ctx.save();
-      ctx.globalAlpha = opacity;
-      ctx.fillStyle = '#FF4444';
-      ctx.font = 'bold 40px Arial';
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-
-      // Rotating watermark
-      ctx.translate(canvas.width / 2, canvas.height / 2);
-      ctx.rotate(Math.sin(time) * 0.2);
-      ctx.fillText('🚫', 0, 0);
-      ctx.restore();
-
-      // Draw edge detection pattern
-      ctx.fillStyle = `rgba(255, 68, 68, ${0.1 + Math.sin(time * 3) * 0.05})`;
-      ctx.fillRect(0, 0, canvas.width, 2);
-      ctx.fillRect(0, canvas.height - 2, canvas.width, 2);
-      ctx.fillRect(0, 0, 2, canvas.height);
-      ctx.fillRect(canvas.width - 2, 0, 2, canvas.height);
-
-      animationId = requestAnimationFrame(animate);
-    };
-
-    animate();
-
-    return () => {
-      if (animationId) {
-        cancelAnimationFrame(animationId);
-      }
-    };
-  }, []);
-
-  // Detect screen recording attempts using multiple methods
-  useEffect(() => {
-    let canvasCheckInterval: NodeJS.Timeout;
-
-    // Method 1: Monitor for getDisplayMedia usage
-    const originalGetDisplayMedia = navigator.mediaDevices?.getDisplayMedia;
-    if (originalGetDisplayMedia) {
-      (navigator.mediaDevices as any).getDisplayMedia = function (...args: any[]) {
-        handleScreenRecordingDetected();
-        return originalGetDisplayMedia.apply(this, args);
-      };
-    }
-
-    // Method 2: Monitor for canvas stream capture
-    const originalCaptureStream = (HTMLCanvasElement.prototype as any).captureStream;
-    if (originalCaptureStream) {
-      (HTMLCanvasElement.prototype as any).captureStream = function (...args: any[]) {
-        handleScreenRecordingDetected();
-        return originalCaptureStream.apply(this, args);
-      };
-    }
-
-    // Method 3: Monitor MediaRecorder usage
-    const OriginalMediaRecorder = window.MediaRecorder;
-    if (OriginalMediaRecorder) {
-      (window as any).MediaRecorder = class extends OriginalMediaRecorder {
-        constructor(stream: any) {
-          super(stream);
-          handleScreenRecordingDetected();
-        }
-      };
-    }
-
-    // Method 4: Monitor document visibility change (only trigger if hidden for extended period)
-    const handleVisibilityChange = () => {
-      if (document.hidden && !document.fullscreenElement) {
-        setTimeout(() => {
-          // Only trigger if still hidden after 2 seconds (prevents false positives from notifications)
-          if (document.hidden && !document.fullscreenElement) {
-            handleScreenRecordingDetected();
-          }
-        }, 2000);
-      }
-    };
-
-    // Method 5: Periodic canvas permission check
-    canvasCheckInterval = setInterval(() => {
-      try {
-        const testCanvas = document.createElement('canvas');
-        const testCtx = testCanvas.getContext('2d');
-        if (testCtx) {
-          testCtx.fillStyle = '#fff';
-          testCtx.fillRect(0, 0, 10, 10);
-          const imageData = testCtx.getImageData(0, 0, 1, 1);
-          if (!imageData || !imageData.data) {
-            handleScreenRecordingDetected();
-          }
-        }
-      } catch (err) {
-        handleScreenRecordingDetected();
-      }
-    }, 5000);
-
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-
-    return () => {
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
-      clearInterval(canvasCheckInterval);
-    };
-  }, []);
-
-  // Handle screen recording detection
-  const handleScreenRecordingDetected = () => {
-    setIsScreenRecording(true);
-    // Pause all videos
-    Object.values(videoRefsMap.current).forEach(video => {
-      if (video && video instanceof HTMLVideoElement) video.pause();
-    });
-  };
 
   const handleUnlock = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -378,25 +239,16 @@ const VideoLessonCard: React.FC<{ lesson: Lesson; levelId: string }> = ({ lesson
   };
 
   // Get videos from lesson: either new videos array or fallback to single videoUrl
-  const videos = lesson.videos && lesson.videos.length > 0 
-    ? lesson.videos 
+  const videos = lesson.videos && lesson.videos.length > 0
+    ? lesson.videos
     : (lesson.videoUrl ? [{ id: 'legacy-' + lesson.id, title: lesson.title, videoUrl: lesson.videoUrl }] : []);
 
   return (
     <div className="space-y-8">
-      {/* Screen recording warning - persistent banner */}
-      {isScreenRecording && (
-        <div className="fixed top-0 left-0 right-0 z-[9999] bg-red-600 text-white py-4 px-4 text-center font-bold text-lg shadow-2xl animate-pulse">
-          🚫 تم اكتشاف تسجيل الشاشة - الفيديو محظور
-        </div>
-      )}
-
-      {!isScreenRecording && (
-        <>
-          {/* Lock overlay if needed */}
-          {isLocked && ((lesson.codes?.length ?? 0) > 0 || lesson.code) && (
-            <div className="bg-glass rounded-[2rem] shadow-xl border border-white/50 p-12 text-center">
-              <div className="w-20 h-20 bg-gray-800 rounded-full flex items-center justify-center mx-auto mb-6">
+      {/* Lock overlay if needed */}
+      {isLocked && ((lesson.codes?.length ?? 0) > 0 || lesson.code) && (
+        <div className="bg-glass rounded-[2rem] shadow-xl border border-white/50 p-12 text-center">
+          <div className="w-20 h-20 bg-gray-800 rounded-full flex items-center justify-center mx-auto mb-6">
             <span className="text-5xl">🔒</span>
           </div>
           <h3 className="text-white font-bold mb-2 text-2xl">هذه الفيديوهات محمية بكود</h3>
@@ -430,75 +282,24 @@ const VideoLessonCard: React.FC<{ lesson: Lesson; levelId: string }> = ({ lesson
       {!isLocked && videos.map((video, idx) => (
         <div key={video.id} className="bg-glass rounded-[2rem] shadow-xl overflow-hidden border border-white/50 flex flex-col">
           <div className="aspect-video relative bg-black overflow-hidden">
-            {/* Screen recording black screen overlay - takes full priority */}
-            {isScreenRecording && (
-              <div className="absolute inset-0 bg-black z-50 flex items-center justify-center">
-                <div className="text-center">
-                  <div className="text-6xl mb-4 animate-pulse">🚫</div>
-                  <p className="text-white font-bold text-lg mb-2">تسجيل الشاشة مكتشف</p>
-                  <p className="text-gray-300 text-sm">يرجى إيقاف التسجيل للمتابعة</p>
-                </div>
-              </div>
-            )}
-
             {video.videoUrl && (video.videoUrl.startsWith('data:') || video.videoUrl.endsWith('.mp4')) ? (
-              <>
-                <video 
-                  ref={el => { if (el) videoRefsMap.current[video.id] = el; }}
-                  className="w-full h-full" 
-                  src={video.videoUrl} 
-                  controls
-                  controlsList="nodownload"
-                  style={isScreenRecording ? { opacity: 0 } : { opacity: 1 }}
-                  onPlay={(e) => {
-                    if (isScreenRecording) {
-                      (e.target as HTMLVideoElement).pause();
-                    }
-                  }}
-                  onContextMenu={(e) => {
-                    e.preventDefault();
-                    return false;
-                  }}
-                  onTouchStart={(e) => {
-                    // Prevent long press context menu on mobile
-                    const longPressTimer = setTimeout(() => {
-                      e.preventDefault();
-                    }, 500);
-                    
-                    const handleTouchEnd = () => {
-                      clearTimeout(longPressTimer);
-                      document.removeEventListener('touchend', handleTouchEnd);
-                    };
-                    document.addEventListener('touchend', handleTouchEnd);
-                  }}
-                />
-                {/* Animated watermark canvas overlay to prevent screen recording */}
-                {idx === 0 && (
-                  <canvas 
-                    ref={canvasOverlayRef}
-                    className="absolute top-0 left-0 w-full h-full pointer-events-none"
-                    style={{ opacity: isScreenRecording ? 0 : 0.3, zIndex: 10 }}
-                  />
-                )}
-              </>
+              <video
+                className="w-full h-full"
+                src={video.videoUrl}
+                controls
+                controlsList="nodownload"
+                onContextMenu={(e) => {
+                  e.preventDefault();
+                  return false;
+                }}
+              />
             ) : (
-              <>
-                <iframe
-                  className="w-full h-full"
-                  src={video.videoUrl}
-                  title={video.title}
-                  allowFullScreen
-                  style={isScreenRecording ? { opacity: 0 } : { opacity: 1 }}
-                ></iframe>
-                {/* Animated watermark for iframe embeds */}
-                {idx === 0 && (
-                  <canvas 
-                    ref={canvasOverlayRef}
-                    className="absolute top-0 left-0 w-full h-full pointer-events-none"
-                    style={{ opacity: isScreenRecording ? 0 : 0.3, zIndex: 10 }}
-                  />
-                )}
-              </>
+              <iframe
+                className="w-full h-full"
+                src={video.videoUrl}
+                title={video.title}
+                allowFullScreen
+              ></iframe>
             )}
           </div>
           <div className="p-8">
@@ -509,29 +310,9 @@ const VideoLessonCard: React.FC<{ lesson: Lesson; levelId: string }> = ({ lesson
             {videos.length > 1 && (
               <p className="text-gray-400 text-sm mt-4">الفيديو {idx + 1} من {videos.length}</p>
             )}
-            <p className="text-gray-400 text-xs mt-3 flex items-center gap-2">
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>
-              الفيديو محمي من التنزيل وتسجيل الشاشة
-            </p>
           </div>
         </div>
       ))}
-        </>
-      )}
-
-      {/* Full screen black overlay when recording detected */}
-      {isScreenRecording && (
-        <div className="fixed inset-0 z-[5000] bg-black flex flex-col items-center justify-center gap-6">
-          <div className="text-center">
-            <div className="text-8xl mb-6 animate-pulse">🚫</div>
-            <h2 className="text-white font-bold text-3xl mb-4">تسجيل الشاشة مكتشف</h2>
-            <p className="text-gray-300 text-lg max-w-md">
-              الفيديو محمي. يرجى إيقاف تسجيل الشاشة للمتابعة.
-            </p>
-          </div>
-          <div className="w-16 h-16 border-4 border-red-500 border-t-transparent rounded-full animate-spin mt-8"></div>
-        </div>
-      )}
     </div>
   );
 };
@@ -558,7 +339,7 @@ const CoursesPage: React.FC = () => {
           {(level.lessons || []).map(lesson => (
             <Link key={lesson.id} to={`/level/${levelId}/videos/${lesson.id}`} className="block group">
               <div className="bg-glass rounded-[2rem] shadow-xl overflow-hidden border border-white/50 hover:shadow-2xl transition-all transform hover:scale-105">
-                <div 
+                <div
                   className="aspect-video relative bg-black"
                   style={lesson.coverImage ? { backgroundImage: `url(${lesson.coverImage})`, backgroundSize: 'cover', backgroundPosition: 'center' } : { backgroundColor: '#000' }}
                 >
@@ -606,7 +387,7 @@ const ContentPage: React.FC<{ type: 'videos' | 'notes' }> = ({ type }) => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
           {(level.lessons || []).map(lesson => (
             <React.Fragment key={lesson.id}>
-                {type === 'videos' ? (
+              {type === 'videos' ? (
                 <VideoLessonCard lesson={lesson} levelId={level.id} />
               ) : (
                 <div className="bg-glass rounded-[2rem] shadow-xl overflow-hidden border border-white/50 flex flex-col hover:shadow-2xl transition-all group">
@@ -668,21 +449,21 @@ const App: React.FC = () => {
         <Navbar />
         <main className="flex-grow">
           <ErrorBoundary>
-          <Routes>
-            <Route path="/" element={<HomePage />} />
-            <Route path="/level/:levelId/courses" element={<CoursesPage />} />
-            <Route path="/level/:levelId/videos/:lessonId" element={<VideoPlayerPage />} />
-            <Route path="/level/:levelId/videos" element={<ContentPage type="videos" />} />
-            <Route path="/level/:levelId/notes" element={<ContentPage type="notes" />} />
-            <Route path="/admin-login" element={<AdminLogin />} />
-            <Route path="/admin" element={<AdminDashboard />} />
-            <Route path="/admin/exams" element={<AdminExams />} />
-            <Route path="/admin/exam-results" element={<AdminExamResults />} />
-            <Route path="/exams" element={<StudentExams />} />
-            <Route path="/exam/:examId" element={<StudentExamPage />} />
-            <Route path="/student-login" element={<StudentLogin />} />
-            <Route path="/admin/students" element={<StudentManagement />} />
-          </Routes>
+            <Routes>
+              <Route path="/" element={<HomePage />} />
+              <Route path="/level/:levelId/courses" element={<CoursesPage />} />
+              <Route path="/level/:levelId/videos/:lessonId" element={<VideoPlayerPage />} />
+              <Route path="/level/:levelId/videos" element={<ContentPage type="videos" />} />
+              <Route path="/level/:levelId/notes" element={<ContentPage type="notes" />} />
+              <Route path="/admin-login" element={<AdminLogin />} />
+              <Route path="/admin" element={<AdminDashboard />} />
+              <Route path="/admin/exams" element={<AdminExams />} />
+              <Route path="/admin/exam-results" element={<AdminExamResults />} />
+              <Route path="/exams" element={<StudentExams />} />
+              <Route path="/exam/:examId" element={<StudentExamPage />} />
+              <Route path="/student-login" element={<StudentLogin />} />
+              <Route path="/admin/students" element={<StudentManagement />} />
+            </Routes>
           </ErrorBoundary>
         </main>
 

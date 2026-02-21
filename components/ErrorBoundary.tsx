@@ -1,26 +1,33 @@
-import React from 'react';
+import React, { Component, ErrorInfo, ReactNode } from 'react';
 
-interface State {
+interface ErrorBoundaryState {
   hasError: boolean;
-  error: any | null;
-  info: any | null;
+  error: Error | null;
+  info: ErrorInfo | null;
 }
 
-class ErrorBoundary extends React.Component<React.PropsWithChildren<{}>, State> {
-  constructor(props: any) {
+interface ErrorBoundaryProps {
+  children?: ReactNode;
+}
+
+// Extending from a typed base to workaround useDefineForClassFields: false
+class ErrorBoundary extends (Component as new (props: ErrorBoundaryProps) => Component<ErrorBoundaryProps, ErrorBoundaryState>) {
+  constructor(props: ErrorBoundaryProps) {
     super(props);
-    this.state = { hasError: false, error: null, info: null };
+    (this as any).state = { hasError: false, error: null, info: null } as ErrorBoundaryState;
   }
 
-  componentDidCatch(error: any, info: any) {
-    // Log the error for debugging
+  componentDidCatch(error: Error, info: ErrorInfo) {
     // eslint-disable-next-line no-console
     console.error('Uncaught error:', error, info);
-    this.setState({ hasError: true, error, info });
+    (this as any).setState({ hasError: true, error, info });
   }
 
   render() {
-    if (this.state.hasError) {
+    const state = (this as any).state as ErrorBoundaryState;
+    const children = (this as any).props?.children;
+
+    if (state.hasError) {
       return (
         <div className="min-h-screen flex items-center justify-center p-8">
           <div className="max-w-4xl w-full bg-white rounded-2xl shadow p-6 border">
@@ -29,20 +36,20 @@ class ErrorBoundary extends React.Component<React.PropsWithChildren<{}>, State> 
             <div className="mb-4">
               <details className="whitespace-pre-wrap bg-gray-50 p-3 rounded">
                 <summary className="cursor-pointer font-medium">عرض تفاصيل الخطأ</summary>
-                <pre className="text-xs mt-2">{String(this.state.error && this.state.error.stack) || String(this.state.error)}</pre>
-                <pre className="text-xs mt-2">{String(this.state.info && this.state.info.componentStack)}</pre>
+                <pre className="text-xs mt-2">{String(state.error?.stack) || String(state.error)}</pre>
+                <pre className="text-xs mt-2">{String(state.info?.componentStack)}</pre>
               </details>
             </div>
             <div className="flex gap-3">
               <button onClick={() => window.location.reload()} className="px-4 py-2 bg-sky-600 text-white rounded">إعادة تحميل الصفحة</button>
-              <button onClick={() => { this.setState({ hasError: false, error: null, info: null }); }} className="px-4 py-2 bg-gray-100 rounded">إخفاء</button>
+              <button onClick={() => { (this as any).setState({ hasError: false, error: null, info: null }); }} className="px-4 py-2 bg-gray-100 rounded">إخفاء</button>
             </div>
           </div>
         </div>
       );
     }
 
-    return this.props.children as any;
+    return children ?? null;
   }
 }
 

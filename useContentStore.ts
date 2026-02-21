@@ -18,7 +18,8 @@ export function useContentStore() {
             if (snapshot.exists()) {
                 const data = snapshot.val() as PrepData[];
                 // Ensure all levels have lessons array
-                const validated = (Array.isArray(data) ? data : Object.values(data)).map(level => ({
+                const rawLevels = (Array.isArray(data) ? data : Object.values(data)) as PrepData[];
+                const validated = rawLevels.map(level => ({
                     ...level,
                     lessons: level.lessons || []
                 }));
